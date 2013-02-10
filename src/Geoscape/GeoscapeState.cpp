@@ -433,7 +433,7 @@ void GeoscapeState::think()
 	if (_minimizedDogfights == 0 && _dogfights.empty() &&_battleMusic)
 	{
 		_battleMusic = false;
-		_music = false;
+		musicStop();
 	}
 }
 
@@ -577,13 +577,13 @@ void GeoscapeState::time5Seconds()
 					{
 						(*i)->setDestination(0);
 						base->setupDefenses();
+						timerReset();
 						if (base->getDefenses()->size() > 0)
 						{
-							popup(new BaseDefenseState(_game, base, *i));
+							popup(new BaseDefenseState(_game, base, *i, this));
 						}
 						else if (base->getSoldiers()->size() > 0)
 						{
-							// Whatever happens in the base defense, the UFO has finished its duty
 							(*i)->setStatus(Ufo::DESTROYED);
 							size_t month = _game->getSavedGame()->getMonthsPassed();
 							if (month > _game->getRuleset()->getAlienItemLevels().size()-1)
@@ -596,11 +596,12 @@ void GeoscapeState::time5Seconds()
 							bgen.setAlienRace((*i)->getAlienRace());
 							bgen.setAlienItemlevel(_game->getRuleset()->getAlienItemLevels().at(month).at(RNG::generate(0,9)));
 							bgen.run();
-
-							popup(new BriefingState(_game, 0, base, *i));
+							musicStop();
+							popup(new BriefingState(_game, 0, base));
 						}
 						else
 						{
+							(*i)->setStatus(Ufo::DESTROYED);
 							popup(new BaseDestroyedState(_game, base));
 						}
 					}
@@ -702,9 +703,8 @@ void GeoscapeState::time5Seconds()
 								// look up polygons texture
 								int texture, shade;
 								_globe->getPolygonTextureAndShade(u->getLongitude(), u->getLatitude(), &texture, &shade);
-								_music = false;
 								timerReset();
-								popup(new ConfirmLandingState(_game, *j, texture, shade));
+								popup(new ConfirmLandingState(_game, *j, texture, shade, this));
 							}
 						}
 						else if (u->getStatus() != Ufo::LANDED)
@@ -726,9 +726,8 @@ void GeoscapeState::time5Seconds()
 						// look up polygons texture
 						int texture, shade;
 						_globe->getPolygonTextureAndShade(t->getLongitude(), t->getLatitude(), &texture, &shade);
-						_music = false;
 						timerReset();
-						popup(new ConfirmLandingState(_game, *j, texture, shade));
+						popup(new ConfirmLandingState(_game, *j, texture, shade, this));
 					}
 					else
 					{
@@ -743,9 +742,8 @@ void GeoscapeState::time5Seconds()
 						{
 							int texture, shade;
 							_globe->getPolygonTextureAndShade(b->getLongitude(), b->getLatitude(), &texture, &shade);
-							_music = false;
 							timerReset();
-							popup(new ConfirmLandingState(_game, *j, texture, shade));
+							popup(new ConfirmLandingState(_game, *j, texture, shade, this));
 						}
 						else
 						{
@@ -1528,6 +1526,18 @@ void GeoscapeState::timerReset()
 }
 
 /**
+ * Stops the Geoscape music for when another
+ * music is gonna take place, so it resumes
+ * when we go back to the Geoscape.
+ * @param pause True if we want to resume
+ * from the same spot we left off.
+ */
+void GeoscapeState::musicStop(bool pause)
+{
+	_music = false;
+}
+
+/**
  * Adds a new popup window to the queue
  * (this prevents popups from overlapping)
  * and pauses the game timer respectively.
@@ -1842,7 +1852,7 @@ void GeoscapeState::startDogfight()
 		_dogfightStartTimer->stop();
 		_zoomInEffectTimer->stop();
 		timerReset();
-		_music = false;
+		musicStop();
 		while(!_dogfightsToBeStarted.empty())
 		{
 			_dogfights.push_back(_dogfightsToBeStarted.back());

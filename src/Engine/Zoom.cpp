@@ -19,9 +19,21 @@
 
 #include "Zoom.h"
 
+//#include "Scalers/hq2x.hpp"
+
 #include "Exception.h"
 #include "Surface.h"
 #include "Logger.h"
+#include "Options.h"
+
+extern "C" {
+// Scale2X
+#include "Scalers/scalebit.h"
+}
+// HQX
+
+#include "Scalers/common.h"
+#include "Scalers/hqx.h"
 
 
 #ifdef _WIN32
@@ -30,9 +42,12 @@
 #include <intrin.h>
 #endif
 
+#ifdef __GNUC__
+#include <cpuid.h>
+#endif
+
 #ifdef __SSE2__
 #include <emmintrin.h> // for SSE2 intrinsics; see http://msdn.microsoft.com/en-us/library/has3d153%28v=vs.71%29.aspx
-#include <cpuid.h>
 #endif
 
 
@@ -181,7 +196,7 @@ static int zoomSurface4X_64bit(SDL_Surface *src, SDL_Surface *dst)
 	Uint64 dataSrc;
 	Uint64 dataDst;
 	Uint8 *pixelSrc = (Uint8*)src->pixels;
-	Uint8 *pixelDst = (Uint8*)dst->pixels;
+	Uint8 *pixelDstRow = (Uint8*)dst->pixels;
 	int sx, sy;
 	static bool proclaimed = false;
 	
@@ -191,9 +206,10 @@ static int zoomSurface4X_64bit(SDL_Surface *src, SDL_Surface *dst)
 		Log(LOG_INFO) << "Using modestly fast 4X zoom routine.";
 	}
 
-	for (sy = 0; sy < src->h; ++sy, pixelDst += dst->pitch*3)
+	for (sy = 0; sy < src->h; ++sy, pixelDstRow += dst->pitch*4)
 	{
-		/* Uint8 *pixelDst = pixelDstRow;*/
+		Uint8 *pixelDst = pixelDstRow;
+	
 		for (sx = 0; sx < src->w; sx += 8, pixelSrc += 8)
 		{
 			dataSrc = *((Uint64*) pixelSrc);
@@ -460,12 +476,8 @@ static int zoomSurface4X_SSE2(SDL_Surface *src, SDL_Surface *dst)
 	__m128i dataSrc;
 	__m128i dataDst;
 	Uint8 *pixelSrc = (Uint8*)src->pixels;
-	__m128i *pixelDst =  (__m128i*)dst->pixels;
-	__m128i *pixelDst2 = (__m128i*)((Uint8*)dst->pixels + dst->pitch);
-	__m128i *pixelDst3 = (__m128i*)((Uint8*)dst->pixels + dst->pitch*2);
-	__m128i *pixelDst4 = (__m128i*)((Uint8*)dst->pixels + dst->pitch*3);
+	Uint8 *pixelDstRow = (Uint8*)dst->pixels;
 	int sx, sy;
-	int inc = (dst->pitch * 3) / sizeof(__m128i);
 	static bool proclaimed = false;
 
 	if (!proclaimed)
@@ -474,8 +486,12 @@ static int zoomSurface4X_SSE2(SDL_Surface *src, SDL_Surface *dst)
 		Log(LOG_INFO) << "Using SSE2 4X zoom routine.";
 	}
 
-	for (sy = 0; sy < src->h; ++sy)
+	for (sy = 0; sy < src->h; ++sy, pixelDstRow += dst->pitch*4)
 	{
+		__m128i *pixelDst =  (__m128i*)pixelDstRow;
+		__m128i *pixelDst2 = (__m128i*)((Uint8*)pixelDstRow + dst->pitch);
+		__m128i *pixelDst3 = (__m128i*)((Uint8*)pixelDstRow + dst->pitch*2);
+		__m128i *pixelDst4 = (__m128i*)((Uint8*)pixelDstRow + dst->pitch*3);
 		for (sx = 0; sx < src->w; sx += 16, pixelSrc += 16)
 		{
 			dataSrc = *((__m128i*) pixelSrc);
@@ -503,13 +519,7 @@ static int zoomSurface4X_SSE2(SDL_Surface *src, SDL_Surface *dst)
 			dataDst = _mm_unpackhi_epi8(halfDone, halfDone);
 			
 			WRITE_DST;
-		}
-	
-		if (sy == src->h) break;
-		pixelDst += inc;
-		pixelDst2 += inc;
-		pixelDst3 += inc;
-		pixelDst4 += inc;
+		}	
 	}
 
 	return 0;
@@ -527,10 +537,8 @@ static int zoomSurface2X_SSE2(SDL_Surface *src, SDL_Surface *dst)
 	__m128i dataSrc;
 	__m128i dataDst;
 	Uint8 *pixelSrc = (Uint8*)src->pixels;
-	__m128i *pixelDst =  (__m128i*)dst->pixels;
-	__m128i *pixelDst2 = (__m128i*)((Uint8*)dst->pixels + dst->pitch);
+	Uint8 *pixelDstRow = (Uint8*)dst->pixels;
 	int sx, sy;
-	int inc = (dst->pitch) / sizeof(__m128i);
 	static bool proclaimed = false;
 	
 	if (!proclaimed)
@@ -539,8 +547,11 @@ static int zoomSurface2X_SSE2(SDL_Surface *src, SDL_Surface *dst)
 		Log(LOG_INFO) << "Using SSE2 2X zoom routine.";
 	}
 
-	for (sy = 0; sy < src->h; ++sy)
+	for (sy = 0; sy < src->h; ++sy, pixelDstRow += dst->pitch*2)
 	{
+		__m128i *pixelDst =  (__m128i*)pixelDstRow;
+		__m128i *pixelDst2 = (__m128i*)((Uint8*)pixelDstRow + dst->pitch);
+
 		for (sx = 0; sx < src->w; sx += 16, pixelSrc += 16)
 		{
 			dataSrc = *((__m128i*) pixelSrc);
@@ -557,21 +568,20 @@ static int zoomSurface2X_SSE2(SDL_Surface *src, SDL_Surface *dst)
 			
 			WRITE_DST;
 		}
-		pixelDst += inc;
-		pixelDst2 += inc;
 	}
 	
 	return 0;
 }
 
-
-static bool haveSSE2()
+/** Checks the SSE2 feature bit returned by the CPUID instruction
+ */
+bool Zoom::haveSSE2()
 {
-	unsigned int CPUInfo[4];
-
 #ifdef __GNUC__
+	unsigned int CPUInfo[4];
 	__get_cpuid(1, CPUInfo, CPUInfo+1, CPUInfo+2, CPUInfo+3);
 #elif _WIN32
+	int CPUInfo[4];
 	__cpuid(CPUInfo, 1);
 #else
 	return false;
@@ -607,7 +617,63 @@ int Zoom::_zoomSurfaceY(SDL_Surface * src, SDL_Surface * dst, int flipx, int fli
 	int dgap;
 	static bool proclaimed = false;
 
-// if we're scaling by a factor of 2 or 4, try to use a more efficient function	
+	if (Options::getBool("useHQXFilter"))
+	{
+		static bool initDone = false;
+
+		if (!initDone)
+		{
+			hqxInit();
+			initDone = true;
+		}
+
+		// HQX_API void HQX_CALLCONV hq2x_32_rb( uint32_t * src, uint32_t src_rowBytes, uint32_t * dest, uint32_t dest_rowBytes, int width, int height );
+
+		if (dst->w == src->w * 2 && dst->h == src->h * 2)
+		{
+			hq2x_32_rb((uint32_t*) src->pixels, src->pitch, (uint32_t*) dst->pixels, dst->pitch, src->w, src->h);
+			return 0;
+		}
+
+		if (dst->w == src->w * 3 && dst->h == src->h * 3)
+		{
+			hq3x_32_rb((uint32_t*) src->pixels, src->pitch, (uint32_t*) dst->pixels, dst->pitch, src->w, src->h);
+			return 0;
+		}
+
+		if (dst->w == src->w * 4 && dst->h == src->h * 4)
+		{
+			hq4x_32_rb((uint32_t*) src->pixels, src->pitch, (uint32_t*) dst->pixels, dst->pitch, src->w, src->h);
+			return 0;
+		}
+
+	}
+
+	if (Options::getBool("useScaleFilter"))
+	{
+		// check the resolution to see which of scale2x, scale3x, etc. we need
+
+		if (dst->w == src->w * 2 && dst->h == src->h *2 && !scale_precondition(2, src->format->BytesPerPixel, src->w, src->h))
+		{
+			scale(2, dst->pixels, dst->pitch, src->pixels, src->pitch, src->format->BytesPerPixel, src->w, src->h);
+			return 0;
+		}
+
+		if (dst->w == src->w * 3 && dst->h == src->h *3 && !scale_precondition(3, src->format->BytesPerPixel, src->w, src->h))
+		{
+			scale(3, dst->pixels, dst->pitch, src->pixels, src->pitch, src->format->BytesPerPixel, src->w, src->h);
+			return 0;
+		}
+
+		if (dst->w == src->w * 4 && dst->h == src->h *4 && !scale_precondition(4, src->format->BytesPerPixel, src->w, src->h))
+		{
+			scale(4, dst->pixels, dst->pitch, src->pixels, src->pitch, src->format->BytesPerPixel, src->w, src->h);
+			return 0;
+		}
+
+	}
+
+	// if we're scaling by a factor of 2 or 4, try to use a more efficient function	
 
 	if (src->format->BytesPerPixel == 1 && dst->format->BytesPerPixel == 1)
 	{

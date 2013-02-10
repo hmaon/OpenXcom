@@ -49,7 +49,7 @@ const double Screen::BASE_HEIGHT = 200.0;
  */
 Screen::Screen(int width, int height, int bpp, bool fullscreen) : _bpp(bpp), _scaleX(1.0), _scaleY(1.0), _fullscreen(fullscreen), _numColors(0), _firstColor(0)
 {
-	_surface = new Surface((int)BASE_WIDTH, (int)BASE_HEIGHT);
+	_surface = new Surface((int)BASE_WIDTH, (int)BASE_HEIGHT, 0, 0, bpp);
 	_flags = SDL_SWSURFACE|SDL_HWPALETTE;
 	if (Options::getBool("asyncBlit")) _flags |= SDL_ASYNCBLIT;
 	if (_fullscreen)
@@ -100,7 +100,7 @@ void Screen::handle(Action *action)
 			i++;
 		}
 		while (CrossPlatform::fileExists(ss.str()));
-
+		
 		std::vector<unsigned char> image;
 		SDL_Color *palette = getPalette();
 
@@ -108,10 +108,27 @@ void Screen::handle(Action *action)
 		{
 			for (int x = 0; x < getWidth(); ++x)
 			{
-				Uint8 color = ((Uint8 *)_screen->pixels)[y * _screen->pitch + x * _screen->format->BytesPerPixel];
-				image.push_back(palette[color].r);
-				image.push_back(palette[color].g);
-				image.push_back(palette[color].b);
+				switch(_screen->format->BytesPerPixel)
+				{
+					Uint8 color;
+					Uint32 colors;
+				case 1:
+					color = ((Uint8 *)_screen->pixels)[y * _screen->pitch + x * _screen->format->BytesPerPixel];
+					image.push_back(palette[color].r);
+					image.push_back(palette[color].g);
+					image.push_back(palette[color].b);
+					break;
+				case 2:
+				case 3:
+				case 4:
+					colors = *(Uint32*)(((Uint8 *)_screen->pixels) + y * _screen->pitch + x * _screen->format->BytesPerPixel);
+					image.push_back((colors & _screen->format->Rmask) >> _screen->format->Rshift);
+					image.push_back((colors & _screen->format->Gmask) >> _screen->format->Gshift);
+					image.push_back((colors & _screen->format->Bmask) >> _screen->format->Bshift);
+					break;
+				default:
+					return; // not likely
+				}
 			}
 		}
 
@@ -119,7 +136,7 @@ void Screen::handle(Action *action)
 		if (error)
 		{
 			Log(LOG_ERROR) << "Saving to PNG failed: " << lodepng_error_text(error);
-		}
+		} 
 	}
 }
 
@@ -184,12 +201,12 @@ void Screen::setPalette(SDL_Color* colors, int firstcolor, int ncolors)
 	{
 		// an initial palette setup has not been comitted to the screen yet
 		// just update it with whatever colors are being sent now
-		memcpy(&(deferredPalette[firstcolor]), colors, sizeof(SDL_Color)*ncolors);
+		memmove(&(deferredPalette[firstcolor]), colors, sizeof(SDL_Color)*ncolors);
 		_numColors = 256; // all the use cases are just a full palette with 16-color follow-ups
 		_firstColor = 0;
 	} else
 	{
-		memcpy(&(deferredPalette[firstcolor]), colors, sizeof(SDL_Color) * ncolors);
+		memmove(&(deferredPalette[firstcolor]), colors, sizeof(SDL_Color) * ncolors);
 		_numColors = ncolors;
 		_firstColor = firstcolor;
 	}
@@ -226,7 +243,7 @@ void Screen::setPalette(SDL_Color* colors, int firstcolor, int ncolors)
  */
 SDL_Color *Screen::getPalette() const
 {
-	return _surface->getPalette();
+	return (SDL_Color*)deferredPalette;
 }
 
 /**
@@ -265,7 +282,7 @@ void Screen::setResolution(int width, int height)
 	}
 
 	Log(LOG_INFO) << "Display set to " << _screen->w << "x" << _screen->h << "x" << (int)_screen->format->BitsPerPixel << ".";
-	setPalette(getPalette());
+	if (_surface->getSurface()->format->BitsPerPixel == 8) _surface->setPalette(getPalette());
 }
 
 /**
