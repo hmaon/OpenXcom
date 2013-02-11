@@ -205,7 +205,7 @@ void BattleUnit::load(const YAML::Node &node)
 	_killedBy = (UnitFaction)a;
 	if (const YAML::Node *pName = node.FindValue("originalFaction"))
 	{
-		node["originalFaction"] >> a;
+		*pName >> a;
 		_originalFaction = (UnitFaction)a;
 	}
 	else
@@ -2207,6 +2207,7 @@ int BattleUnit::getCarriedWeight() const
 	for (std::vector<BattleItem*>::const_iterator i = _inventory.begin(); i != _inventory.end(); ++i)
 	{
 		weight += (*i)->getRules()->getWeight();
+		if (0 != (*i)->getAmmoItem()) weight += (*i)->getAmmoItem()->getRules()->getWeight();
 	}
 	if (weight == 0)
 		weight = 1;

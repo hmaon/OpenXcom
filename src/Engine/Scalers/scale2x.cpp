@@ -40,9 +40,8 @@
 
 #include <assert.h>
 
+#define restrict __restrict
 #ifdef _WIN32
-#define inline _inline
-#define restrict
 #pragma optimize("a", on)
 #endif
 

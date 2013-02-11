@@ -88,6 +88,7 @@ void createDefault()
 	setBool("fpsCounter", false);
 	setBool("craftLaunchAlways", false);
 	setBool("globeSeasons", false);
+	setBool("globeAllRadarsOnBaseBuild", true);
 	setInt("audioSampleRate", 22050);
 	setInt("audioBitDepth", 16);
 	setInt("pauseMode", 0);
@@ -95,6 +96,10 @@ void createDefault()
 	setBool("aggressiveRetaliation", false);
 	setBool("strafe", false);
 	setBool("battleNotifyDeath", false);
+	setBool("allowBuildingQueue", false);
+	setBool("allowAutoSellProduction", false);
+	setBool("showFundsOnGeoscape", false);
+	setBool("showMoreStatsInInventoryView", false);
 	// controls
 	setInt("keyOk", SDLK_RETURN);
 	setInt("keyCancel", SDLK_ESCAPE);

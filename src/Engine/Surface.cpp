@@ -24,7 +24,13 @@
 #include "Palette.h"
 #include "Exception.h"
 #include "ShaderMove.h"
+#include <stdlib.h>
+#include <malloc.h>
 
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+#define _aligned_malloc __mingw_aligned_malloc
+#define _aligned_free   __mingw_aligned_free
+#endif //MINGW
 
 namespace OpenXcom
 {
