@@ -22,7 +22,7 @@ AC_LANG([C++])
 # Find required base packages
 # ===========================
 AC_PROG_CXX
-AC_PROG_CC
+#AC_PROG_CC
 PKG_PROG_PKG_CONFIG([0.24])
 
 # ================
