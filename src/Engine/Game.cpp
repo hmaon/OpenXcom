@@ -109,7 +109,7 @@ Game::Game(const std::string &title) : _screen(0), _cursor(0), _lang(0), _states
 	SDL_EnableUNICODE(1);
 
 	// Create display
-	int bpp = 	Options::getBool("useHQXFilter") ? 32 : 8;
+	int bpp = Screen::isHQXEnabled() ? 32 : 8;
 	_screen = new Screen(Options::getInt("displayWidth"), Options::getInt("displayHeight"), bpp, Options::getBool("fullscreen"));
 
 	// Create cursor
@@ -209,6 +209,11 @@ void Game::run()
 							runningState = reinterpret_cast<SDL_ActiveEvent*>(&_event)->gain ? RUNNING : kbFocusRun[pauseMode];
 							break;
 					}
+					break;
+				case SDL_VIDEORESIZE:
+					Options::setInt("displayWidth", _event.resize.w);
+					Options::setInt("displayHeight", _event.resize.h);
+					_screen->setResolution(_event.resize.w, _event.resize.h);
 					break;
 				case SDL_KEYDOWN:
 				case SDL_KEYUP:

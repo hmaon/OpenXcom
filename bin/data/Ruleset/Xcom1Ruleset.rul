@@ -2219,6 +2219,7 @@ items:
     stun: 4
     energy: 10
     tuUse: 10
+    flatRate: true
     armor: 20
   - type: STR_PSI_AMP
     requires:
@@ -2235,6 +2236,7 @@ items:
     invWidth: 1
     invHeight: 3
     tuUse: 25
+    flatRate: true
     armor: 20
   - type: STR_STUN_ROD
     size: 0.1
@@ -3044,6 +3046,7 @@ items:
     hitSound: 36
     battleType: 9
     tuUse: 25
+    flatRate: true
     recover: false
 ufos:
   - type: STR_SMALL_SCOUT
@@ -3228,7 +3231,7 @@ ufos:
 invs:
   - id: STR_BACK_PACK
     x: 192
-    y: 39
+    y: 37
     slots:
       - [0, 0]
       - [1, 0]
@@ -3282,7 +3285,7 @@ invs:
       STR_RIGHT_SHOULDER: 12
   - id: STR_LEFT_HAND
     x: 128
-    y: 64
+    y: 63
     type: 1
     costs:
       STR_BACK_PACK: 14
@@ -3310,7 +3313,7 @@ invs:
       STR_RIGHT_SHOULDER: 10
   - id: STR_LEFT_SHOULDER
     x: 112
-    y: 39
+    y: 37
     slots:
       - [0, 0]
       - [1, 0]
@@ -3325,7 +3328,7 @@ invs:
       STR_RIGHT_SHOULDER: 8
   - id: STR_RIGHT_HAND
     x: 0
-    y: 64
+    y: 63
     type: 1
     costs:
       STR_BACK_PACK: 14
@@ -3353,7 +3356,7 @@ invs:
       STR_RIGHT_SHOULDER: 10
   - id: STR_RIGHT_SHOULDER
     x: 16
-    y: 39
+    y: 37
     slots:
       - [0, 0]
       - [1, 0]

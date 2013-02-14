@@ -19,7 +19,6 @@
 #include "Screen.h"
 #include <sstream>
 #include <iomanip>
-#include <SDL_rotozoom.h>
 #include <SDL_endian.h>
 #include <limits.h>
 #include "../lodepng.h"
@@ -50,7 +49,7 @@ const double Screen::BASE_HEIGHT = 200.0;
 Screen::Screen(int width, int height, int bpp, bool fullscreen) : _bpp(bpp), _scaleX(1.0), _scaleY(1.0), _fullscreen(fullscreen), _numColors(0), _firstColor(0)
 {
 	_surface = new Surface((int)BASE_WIDTH, (int)BASE_HEIGHT, 0, 0, bpp);
-	_flags = SDL_SWSURFACE|SDL_HWPALETTE;
+	_flags = SDL_SWSURFACE|SDL_HWPALETTE|SDL_RESIZABLE;
 	if (Options::getBool("asyncBlit")) _flags |= SDL_ASYNCBLIT;
 	if (_fullscreen)
 	{
@@ -247,7 +246,10 @@ void Screen::setResolution(int width, int height)
 	}
 
 	Log(LOG_INFO) << "Display set to " << _screen->w << "x" << _screen->h << "x" << (int)_screen->format->BitsPerPixel << ".";
-	if (_surface->getSurface()->format->BitsPerPixel == 8) _surface->setPalette(getPalette());
+	if (_screen->format->BitsPerPixel == 8)
+	{
+		setPalette(getPalette());
+	}
 }
 
 /**
@@ -332,6 +334,26 @@ void Screen::screenshot(const std::string &filename) const
 	{
 		Log(LOG_ERROR) << "Saving to PNG failed: " << lodepng_error_text(error);
 	}
+}
+
+
+/** Check whether useHQXFilter is set in Options and a compatible resolution
+ *  has been selected.
+ */
+bool Screen::isHQXEnabled()
+{
+	int w = Options::getInt("displayWidth");
+	int h = Options::getInt("displayHeight");
+
+	if (Options::getBool("useHQXFilter") && (
+		(w == Screen::BASE_WIDTH * 2 && h == Screen::BASE_HEIGHT * 2) || 
+		(w == Screen::BASE_WIDTH * 3 && h == Screen::BASE_HEIGHT * 3) || 
+		(w == Screen::BASE_WIDTH * 4 && h == Screen::BASE_HEIGHT * 4)))
+	{
+		return true;
+	}
+
+	return false;
 }
 
 }

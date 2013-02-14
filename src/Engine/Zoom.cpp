@@ -35,8 +35,11 @@
 #include "Scalers/hqx.h"
 
 
-#if (_MSC_VER >= 1400)
+#if (_MSC_VER >= 1400) || (defined(__MINGW32__) && defined(__SSE2__))
+
+#ifndef __SSE2__
 #define __SSE2__ true
+#endif
 // probably Visual Studio (or Intel C++ which should also work)
 #include <intrin.h>
 #endif
@@ -120,6 +123,8 @@ static int zoomSurface2X_64bit(SDL_Surface *src, SDL_Surface *dst)
 }
 
 
+#if defined(__WORDSIZE) && (__WORDSIZE == 64) || defined(SIZE_MAX) && (SIZE_MAX > 0xFFFFFFFF)
+#else
 /**
  *  Optimized 8 bit zoomer for resizing by a factor of 2. Doesn't flip.
  *  32-bit version for sad old x86 chips which run out of registers 
@@ -176,6 +181,7 @@ static int zoomSurface2X_32bit(SDL_Surface *src, SDL_Surface *dst)
 	
 	return 0;
 }
+#endif
 
 /**
  *  Optimized 8 bit zoomer for resizing by a factor of 4. Doesn't flip.
@@ -236,6 +242,8 @@ static int zoomSurface4X_64bit(SDL_Surface *src, SDL_Surface *dst)
 }
 
 
+#if defined(__WORDSIZE) && (__WORDSIZE == 64) || defined(SIZE_MAX) && (SIZE_MAX > 0xFFFFFFFF)
+#else
 /**
  *  Optimized 8 bit zoomer for resizing by a factor of 4. Doesn't flip.
  *  32-bit version.
@@ -290,6 +298,7 @@ static int zoomSurface4X_32bit(SDL_Surface *src, SDL_Surface *dst)
 	
 	return 0;
 }
+#endif
 
 /**
  *  Optimized 8 bit zoomer for resizing by a factor of 4. Doesn't flip.
@@ -322,7 +331,7 @@ static int zoomSurface2X_XAxis_32bit(SDL_Surface *src, SDL_Surface *dst)
 		say = 0;
 		return (-1);
 	}
-	
+
 	csy = 0;
 	csay = say;
 	for (int y = 0; y < dst->h; y++) {
@@ -335,7 +344,7 @@ static int zoomSurface2X_XAxis_32bit(SDL_Surface *src, SDL_Surface *dst)
 		(*csay) *= src->pitch;
 		csay++;
 	}
-
+	
 	for (dsty = 0; dsty < dst->h; ++dsty, pixelDstRow += dst->pitch)
 	{
 		if (!say[dsty]) continue;
@@ -359,6 +368,7 @@ static int zoomSurface2X_XAxis_32bit(SDL_Surface *src, SDL_Surface *dst)
 				int j = 0;
 				do
 				{
+					if (dsty + j >= dst->h) break;
 
 					*(pixelDst + (dst->pitch/sizeof(Uint32))*j) = dataDst;
 				} while(say[dsty + ++j] == 0); // fill in all relevant rows
@@ -441,6 +451,7 @@ static int zoomSurface4X_XAxis_32bit(SDL_Surface *src, SDL_Surface *dst)
 				int j = 0;
 				do
 				{
+					if (dsty + j >= dst->h) break;
 
 					*(pixelDst + (dst->pitch/sizeof(Uint32))*j) = dataDst;
 				} while(say[dsty + ++j] == 0); // fill in all relevant rows
@@ -673,12 +684,20 @@ int Zoom::_zoomSurfaceY(SDL_Surface * src, SDL_Surface * dst, int flipx, int fli
 		static bool _haveSSE2 = haveSSE2();
 
 		if (_haveSSE2 &&
-			!((long)src->pixels % 16) && 
-			!((long)dst->pixels % 16)) // alignment check
+			!((ptrdiff_t)src->pixels % 16) && 
+			!((ptrdiff_t)dst->pixels % 16)) // alignment check
 		{
 			if (dst->w == src->w * 2 && dst->h == src->h * 2) return  zoomSurface2X_SSE2(src, dst);
 			else if (dst->w == src->w * 4 && dst->h == src->h * 4) return  zoomSurface4X_SSE2(src, dst);
-		} 
+		} else
+		{
+			static bool complained = false;
+
+			if (!complained)
+			{
+				Log(LOG_ERROR) << "Misaligned surface buffers.";
+			}
+		}
 #endif
 
 // __WORDSIZE is defined on Linux, SIZE_MAX on Windows
