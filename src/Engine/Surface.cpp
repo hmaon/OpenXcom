@@ -26,6 +26,7 @@
 #include "ShaderMove.h"
 #include <stdlib.h>
 #include <malloc.h>
+#include "RNG.h"
 
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
 #define _aligned_malloc __mingw_aligned_malloc
@@ -755,6 +756,15 @@ struct ColorReplace
 		}
 	}
 	
+	static inline void octoFunc(Uint64& dest, const Uint64& src, const int& shade, const int& newColor, const int&)
+	{
+
+	}
+
+	static const inline bool octoOK()
+	{
+		return false;
+	}
 };
 
 /**
@@ -783,7 +793,37 @@ struct StandartShade
 				dest = (src&(15<<4)) | newShade;
 		}
 	}
+
+	static inline void octoFunc(Uint64& dest, const Uint64& src, const int& shade, const int&, const int&)
+	{
+		Uint64 mask = 0xff;
+		Uint64 shademask = 0x0f;
+		Uint64 varshade = shade;
+		Uint64 newDest = dest;
+		for (int i = 0; i < 8; ++i)
+		{
+			if (src&mask)
+			{
+				newDest &= ~mask;
+				const Uint64 newShade = (src&shademask) + varshade;
+
+				if (newShade > shademask)
+					newDest |= shademask;
+				else
+					newDest |= (src&(shademask<<4)) | newShade;
+			}
+			shademask <<= 8;
+			varshade <<= 8;
+			mask <<= 8;
+		}
+		
+		dest = newDest;
+	}
 	
+	static const inline bool octoOK()
+	{
+		return true;
+	}
 };
 
 
@@ -800,7 +840,7 @@ struct StandartShade
  * @param newBaseColor Attention: the actual color + 1, because 0 is no new base color.
  */
 void Surface::blitNShade(Surface *surface, int x, int y, int off, bool half, int newBaseColor)
-{
+{	
 	ShaderMove<Uint8> src(this, x, y);
 	if(half)
 	{

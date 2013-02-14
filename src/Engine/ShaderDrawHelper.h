@@ -23,6 +23,7 @@
 #include "Surface.h"
 #include "GraphSubset.h"
 #include <vector>
+#include <assert.h>
 
 namespace OpenXcom
 {
@@ -449,6 +450,7 @@ struct controler
 	inline void inc_x();
 
 	inline int& get_ref();
+	inline Uint32& get_octRef();
 };
 
 /// implementation for scalars types aka `int`, `double`, `float`
@@ -505,6 +507,13 @@ struct controler<Scalar<T> >
 	{
 		return ref;
 	}
+	
+	inline Uint64& get_octRef()
+	{
+		static Uint64 dummy = 7;
+		assert(false);
+		return dummy;
+	}
 };
 
 /// implementation for not used arg
@@ -558,6 +567,13 @@ struct controler<Nothing>
 	inline const int& get_ref()
 	{
 		return i;
+	}
+	
+	inline const Uint64& get_octRef()
+	{
+		static Uint64 i64 = 0;
+		
+		return i64;
 	}
 };
 
@@ -633,6 +649,11 @@ struct controler_base
 	inline PixelRef get_ref()
 	{
 		return *ptr_pos_x;
+	}
+	
+	inline Uint64& get_octRef()
+	{
+		return *(Uint64*)ptr_pos_x;
 	}
 };
 

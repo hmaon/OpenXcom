@@ -309,6 +309,16 @@ struct CreateShadow
 		else
 			dest = 0;
 	}
+	
+	static inline void octoFunc(Uint32, Uint32, const Cord, Uint32, const int)
+	{
+		// dummy
+	}
+	
+	static const bool octoOK()
+	{
+		return false;
+	}
 };
 
 

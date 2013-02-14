@@ -169,6 +169,11 @@ struct controler<ShaderRepeat<Pixel> >
 	{
 		return *_ptr_curr_x;
 	}
+	
+	inline Uint32 get_quadRef() // just whatever, ok
+	{
+		return *(Uint32*)_ptr_curr_x;
+	}
 };
 	
 }//namespace helper

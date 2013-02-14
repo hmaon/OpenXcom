@@ -101,9 +101,22 @@ inline void ShaderDraw(const DestType& dest_frame, const Src0Type& src0_frame, c
 		src3.set_x(begin_x, end_x);
 		
 		//iteration on x-axis
-		for(int x = end_x-begin_x; x>0; --x, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x())
+		for(int i = end_x-begin_x; i>0; --i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x())
 		{
-			ColorFunc::func(dest.get_ref(), src0.get_ref(), src1.get_ref(), src2.get_ref(), src3.get_ref());				
+			if (ColorFunc::octoOK() && i >= 8  && !(0xf & (ptrdiff_t)(&(dest.get_ref()))))
+			{
+				ColorFunc::octoFunc(dest.get_octRef(), src0.get_octRef(), src1.get_ref(), src2.get_ref(), src3.get_ref());
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x(); // this is ridiculous.
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x();
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x();
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x();
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x();
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x();
+				--i, dest.inc_x(), src0.inc_x(), src1.inc_x(), src2.inc_x(), src3.inc_x();				
+			} else
+			{
+				ColorFunc::func(dest.get_ref(), src0.get_ref(), src1.get_ref(), src2.get_ref(), src3.get_ref());
+			}
 		}
 	}
 
