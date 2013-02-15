@@ -20,6 +20,7 @@
 #define OPENXCOM_XCOMRESOURCEPACK_H
 
 #include "ResourcePack.h"
+#include "../Engine/Surface.h"
 
 namespace OpenXcom
 {
@@ -29,6 +30,7 @@ namespace OpenXcom
  */
 class XcomResourcePack : public ResourcePack
 {
+	
 public:
 	/// Creates the X-Com ruleset.
 	XcomResourcePack();
@@ -36,6 +38,8 @@ public:
 	~XcomResourcePack();
 	/// Loads battlescape specific resources
 	void loadBattlescapeResources();
+	/// Returns a resource, with error checking and some on-demand loading
+	Surface *getSurface(const std::string &name);
 };
 
 }

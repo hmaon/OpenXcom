@@ -68,7 +68,7 @@ public:
 	/// Sets the screen's 8bpp palette.
 	void setPalette(SDL_Color *colors, int firstcolor = 0, int ncolors = 256);
 	/// Gets the screen's 8bpp palette.
-	SDL_Color *getPalette() const;
+	SDL_Color *getPalette();
 	/// Gets the screen's width.
 	int getWidth() const;
 	/// Gets the screen's height.
