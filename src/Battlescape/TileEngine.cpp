@@ -278,7 +278,7 @@ bool TileEngine::calculateFOV(BattleUnit *unit)
 								unit->addToVisibleTiles(visibleUnit->getTile());
 								if (unit->getFaction() == FACTION_PLAYER)
 								{
-									visibleUnit->getTile()->setDiscovered(true, 2);
+								//	visibleUnit->getTile()->setDiscovered(true, 2);
 									visibleUnit->getTile()->setVisible(+1);
 								}
 							}
@@ -1394,6 +1394,7 @@ int TileEngine::calculateLine(const Position& origin, const Position& target, bo
 	y = y0;
 	z = z0;
 
+	//if (doVoxelCheck) x1=-1000000000; //never hit that
 	//step through longest delta (which we have swapped to x)
 	for (x = x0; x != (x1+step_x); x += step_x)
 	{
