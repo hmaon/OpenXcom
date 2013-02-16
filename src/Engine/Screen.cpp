@@ -292,7 +292,7 @@ double Screen::getYScale() const
  * Saves a screenshot of the screen's contents.
  * @param filename Filename of the PNG file.
  */
-void Screen::screenshot(const std::string &filename) const
+void Screen::screenshot(const std::string &filename)
 {
 	std::vector<unsigned char> image;
 	SDL_Color *palette = getPalette();

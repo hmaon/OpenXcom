@@ -344,7 +344,7 @@ void BattlescapeGenerator::run()
 		// add soldiers that are in the craft or base
 		for (std::vector<Soldier*>::iterator i = _base->getSoldiers()->begin(); i != _base->getSoldiers()->end(); ++i)
 		{
-			if ((*i)->getCraft() == _craft ||
+			if ((_craft != 0 && (*i)->getCraft() == _craft) ||
 				(_craft == 0 && (*i)->getWoundRecovery() == 0 && ((*i)->getCraft() == 0 || (*i)->getCraft()->getStatus() != "STR_OUT")))
 			{
 				unit = addXCOMUnit(new BattleUnit(*i, FACTION_PLAYER, _game->getRuleset()));
@@ -379,7 +379,7 @@ void BattlescapeGenerator::run()
 		else
 		{
 			// add items that are in the base
-			for (std::map<std::string, int>::iterator i = _base->getItems()->getContents()->begin(); i != _base->getItems()->getContents()->end(); ++i)
+			for (std::map<std::string, int>::iterator i = _base->getItems()->getContents()->begin(); i != _base->getItems()->getContents()->end();)
 			{
 				// only put items in the battlescape that make sense (when the item got a sprite, it's probably ok)
 				RuleItem *rule = _game->getRuleset()->getItem(i->first);
@@ -390,6 +390,13 @@ void BattlescapeGenerator::run()
 						_craftInventoryTile->addItem(new BattleItem(_game->getRuleset()->getItem(i->first), _save->getCurrentItemId()),
 							_game->getRuleset()->getInventory("STR_GROUND"));
 					}
+					std::map<std::string, int>::iterator tmp = i;
+					++i;
+					_base->getItems()->removeItem(tmp->first, tmp->second);
+				}
+				else
+				{
+					++i;
 				}
 			}
 			// add items from crafts in base
