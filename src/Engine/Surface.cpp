@@ -32,6 +32,8 @@
 #define _aligned_free   __mingw_aligned_free
 #endif //MINGW
 
+#include "Logger.h"
+
 namespace OpenXcom
 {
 
@@ -75,7 +77,7 @@ Surface::Surface(int width, int height, int x, int y, int bpp) : _x(x), _y(y), _
 		throw Exception(SDL_GetError());
 	}
 
-	SDL_SetColorKey(_surface, SDL_SRCCOLORKEY, 0);
+	SDL_SetColorKey(_surface, SDL_SRCCOLORKEY|SDL_RLEACCEL, 0);
 
 	_crop.w = 0;
 	_crop.h = 0;
@@ -204,12 +206,19 @@ void Surface::loadSpk(const std::string &filename)
 	Uint16 flag;
 	Uint8 value;
 	int x = 0, y = 0;
+	size_t loc = 0;
 
 	while (imgFile.read((char*)&flag, sizeof(flag)) && flag != 65533)
 	{
 		if (flag == 65535)
 		{
 			imgFile.read((char*)&flag, sizeof(flag));
+			if (_surface->format->BytesPerPixel == 1) 
+			{
+				memset((char*)(_surface->pixels) + loc, 0, flag*2);
+				loc += flag*2;
+				continue;
+			}
 			for (int i = 0; i < flag * 2; ++i)
 			{
 				setPixelIterative(&x, &y, 0);
@@ -218,6 +227,12 @@ void Surface::loadSpk(const std::string &filename)
 		else if (flag == 65534)
 		{
 			imgFile.read((char*)&flag, sizeof(flag));
+			if (_surface->format->BytesPerPixel == 1)
+			{
+				imgFile.read((char*)(_surface->pixels) + loc, flag*2);
+				loc += flag*2;
+				continue;
+			}
 			for (int i = 0; i < flag * 2; ++i)
 			{
 				imgFile.read((char*)&value, 1);
@@ -361,19 +376,18 @@ void Surface::blit(Surface *surface)
 		if (_redraw)
 			draw();
 
-		SDL_Rect* cropper;
+		SDL_Rect* cropper = 0;
 		SDL_Rect target;
-		if (_crop.w == 0 && _crop.h == 0)
-		{
-			cropper = 0;
-		}
-		else
+		if (_crop.w && _crop.h)
 		{
 			cropper = &_crop;
 		}
 		target.x = getX();
 		target.y = getY();
-		SDL_BlitSurface(_surface, cropper, surface->getSurface(), &target);
+		if (SDL_BlitSurface(_surface, cropper, surface->getSurface(), &target))
+		{
+			Log(LOG_ERROR) << SDL_GetError();
+		}
 	}
 }
 

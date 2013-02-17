@@ -28,6 +28,8 @@
 #include "../Engine/GMCat.h"
 #include "../Engine/SoundSet.h"
 #include "../Engine/Options.h"
+#include "../Engine/Game.h"
+#include "../Engine/Screen.h"
 #include "../Geoscape/Globe.h"
 #include "../Geoscape/Polygon.h"
 #include "../Geoscape/Polyline.h"
@@ -39,6 +41,9 @@
 #include "../Battlescape/Position.h"
 #include "../Ruleset/MapDataSet.h"
 #include "../Engine/Exception.h"
+
+extern OpenXcom::Game *game; // because how else are we to find the current palette for stupid surface loads? Hurrggh.
+
 
 namespace OpenXcom
 {
@@ -306,7 +311,7 @@ XcomResourcePack::XcomResourcePack() : ResourcePack()
 							 "GMTACTIC",
 							 "GMTACTIC2",
 							 "GMWIN"};
-		std::string exts[] = {"ogg", "mp3", "mod"};
+		std::string exts[] = {"flac", "ogg", "mp3", "mod"};
 		int tracks[] = {3, 6, 0, 18, -1, -1, 2, 19, 20, 21, 10, 9, 8, 12, 17, -1, 11};
 
 		// Check which music version is available
@@ -332,7 +337,7 @@ XcomResourcePack::XcomResourcePack() : ResourcePack()
 			{
 				std::stringstream s;
 				s << "SOUND/" << mus[i] << "." << exts[j];
-				if (CrossPlatform::fileExists(CrossPlatform::getDataFile(s.str()).c_str()))
+				if (CrossPlatform::fileExists(CrossPlatform::getDataFile(s.str())))
 				{
 					_musics[mus[i]] = new Music();
 					_musics[mus[i]]->load(CrossPlatform::getDataFile(s.str()));
@@ -353,7 +358,7 @@ XcomResourcePack::XcomResourcePack() : ResourcePack()
 				{
 					std::stringstream s;
 					s << "SOUND/" << mus[i] << ".mid";
-					if (CrossPlatform::fileExists(CrossPlatform::getDataFile(s.str()).c_str()))
+					if (CrossPlatform::fileExists(CrossPlatform::getDataFile(s.str())))
 					{
 						_musics[mus[i]] = new Music();
 						_musics[mus[i]]->load(CrossPlatform::getDataFile(s.str()));
@@ -558,7 +563,8 @@ void XcomResourcePack::loadBattlescapeResources()
 		_surfaces[spks[i]] = new Surface(320, 200);
 		_surfaces[spks[i]]->loadSpk(CrossPlatform::getDataFile(s.str()));
 	}
-
+	return; // everything past here should be on-demand loadable
+#if 0
 	std::string invs[] = {"MAN_0",
 						  "MAN_1",
 						  "MAN_2",
@@ -598,6 +604,35 @@ void XcomResourcePack::loadBattlescapeResources()
 			}
 		}
 	}
+#endif
 }
+
+/**
+ * Returns a specific surface from the resource set with error checking and on-demand loading.
+ * @param name Name of the surface.
+ * @return Pointer to the surface.
+ */
+Surface *XcomResourcePack::getSurface(const std::string &name)
+{
+	std::map<std::string, Surface *>::const_iterator surf = _surfaces.find(name);
+	std::string fn;
+	
+	if (surf == _surfaces.end()) 
+	{
+		if (name.find(".SPK") != name.npos && CrossPlatform::fileExists(fn = CrossPlatform::getDataFile("UFOGRAPH/" + name)))
+		{
+			Surface *loading = new Surface(320, 200);
+			// std::cout << fn << std::endl;
+			loading->loadSpk(fn);
+			loading->setPalette(game->getScreen()->getPalette(), 0, 256);
+			_surfaces[name] = loading;
+			return loading;
+		} else return 0; 
+	}
+	
+	return _surfaces.find(name)->second;
+}
+
+
 
 }

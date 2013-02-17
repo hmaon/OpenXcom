@@ -3975,6 +3975,7 @@ armors:
       - 1.0
       - 0.0
   - type: SECTOID_ARMOR0
+    spriteInv: SECTOID
     spriteSheet: SECTOID.PCK
     corpseItem: STR_SECTOID_CORPSE
     frontArmor: 4
@@ -3993,6 +3994,7 @@ armors:
       - 1.6
       - 1.0
   - type: FLOATER_ARMOR0
+    spriteInv: FLOATER
     spriteSheet: FLOATER.PCK
     corpseItem: STR_FLOATER_CORPSE
     frontArmor: 8
@@ -4013,6 +4015,7 @@ armors:
       - 1.6
       - 1.0
   - type: FLOATER_ARMOR1
+    spriteInv: FLOATER
     spriteSheet: FLOATER.PCK
     corpseItem: STR_FLOATER_CORPSE
     frontArmor: 16
@@ -4033,6 +4036,7 @@ armors:
       - 1.6
       - 1.0
   - type: FLOATER_ARMOR2
+    spriteInv: FLOATER
     spriteSheet: FLOATER.PCK
     corpseItem: STR_FLOATER_CORPSE
     frontArmor: 24
@@ -4074,6 +4078,7 @@ armors:
       - 1.0
       - 0.0
   - type: REAPER_ARMOR
+    spriteInv: REAPER
     spriteSheet: X_REAP.PCK
     corpseItem: REAPER_CORPSE_
     frontArmor: 28
@@ -4156,6 +4161,7 @@ armors:
       - 0.4
       - 0.0
   - type: CIVM_ARMOR
+    spriteInv: CIVM1
     spriteSheet: CIVM.PCK
     corpseItem: CIVM_CORPSE
     frontArmor: 4
@@ -4175,6 +4181,7 @@ armors:
       - 1.6
       - 1.0
   - type: CIVF_ARMOR
+    spriteInv: CIVF1.SPK
     spriteSheet: CIVF.PCK
     corpseItem: CIVF_CORPSE
     frontArmor: 4
@@ -4190,6 +4197,7 @@ armors:
       - 1.0
       - 1.0
   - type: SNAKEMAN_ARMOR0
+    spriteInv: SNAKEM
     spriteSheet: SNAKEMAN.PCK
     corpseItem: STR_SNAKEMAN_CORPSE
     frontArmor: 20
@@ -4209,6 +4217,7 @@ armors:
       - 1.6
       - 1.0
   - type: SNAKEMAN_ARMOR1
+    spriteInv: SNAKEM
     spriteSheet: SNAKEMAN.PCK
     corpseItem: STR_SNAKEMAN_CORPSE
     frontArmor: 20
@@ -4228,6 +4237,7 @@ armors:
       - 1.5
       - 0.9
   - type: SNAKEMAN_ARMOR2
+    spriteInv: SNAKEM
     spriteSheet: SNAKEMAN.PCK
     corpseItem: STR_SNAKEMAN_CORPSE
     frontArmor: 26
@@ -4247,6 +4257,7 @@ armors:
       - 1.4
       - 0.8
   - type: MUTON_ARMOR0
+    spriteInv: MUTON
     spriteSheet: MUTON.PCK
     corpseItem: STR_MUTON_CORPSE
     frontArmor: 20
@@ -4266,6 +4277,7 @@ armors:
       - 0.9
       - 0.9
   - type: MUTON_ARMOR1
+    spriteInv: MUTON
     spriteSheet: MUTON.PCK
     corpseItem: STR_MUTON_CORPSE
     frontArmor: 24
@@ -4285,6 +4297,7 @@ armors:
       - 0.8
       - 0.8
   - type: MUTON_ARMOR2
+    spriteInv: MUTON
     spriteSheet: MUTON.PCK
     corpseItem: STR_MUTON_CORPSE
     frontArmor: 28
@@ -4304,6 +4317,7 @@ armors:
       - 0.7
       - 0.7  
   - type: ETHEREAL_ARMOR0
+    spriteInv: ETHEREAL
     spriteSheet: ETHEREAL.PCK
     corpseItem: STR_ETHEREAL_CORPSE
     frontArmor: 35
@@ -4324,6 +4338,7 @@ armors:
       - 1.0
       - 0.9
   - type: ETHEREAL_ARMOR1
+    spriteInv: ETHEREAL
     spriteSheet: ETHEREAL.PCK
     corpseItem: STR_ETHEREAL_CORPSE
     frontArmor: 40
@@ -4344,6 +4359,7 @@ armors:
       - 0.9
       - 0.8
   - type: ETHEREAL_ARMOR2
+    spriteInv: ETHEREAL
     spriteSheet: ETHEREAL.PCK
     corpseItem: STR_ETHEREAL_CORPSE
     frontArmor: 40
@@ -4364,6 +4380,7 @@ armors:
       - 0.8
       - 0.7
   - type: CHRYSSALID_ARMOR
+    spriteInv: CHRYSS
     spriteSheet: CHRYS.PCK
     corpseItem: STR_CHRYSSALID_CORPSE
     frontArmor: 34
@@ -4383,6 +4400,7 @@ armors:
       - 1.0
       - 1.0
   - type: ZOMBIE_ARMOR
+    spriteInv: ZOMBIE
     spriteSheet: ZOMBIE.PCK
     corpseItem: STR_ZOMBIE_CORPSE
     frontArmor: 4
@@ -4402,6 +4420,7 @@ armors:
       - 1.0
       - 1.0
   - type: SILACOID_ARMOR
+    spriteInv: SILACOID
     spriteSheet: SILACOID.PCK
     corpseItem: STR_SILACOID_CORPSE
     frontArmor: 50
@@ -4422,6 +4441,7 @@ armors:
       - 1.0
       - 1.0
   - type: CELATID_ARMOR
+    spriteInv: CELATID
     spriteSheet: CELATID.PCK
     corpseItem: STR_CELATID_CORPSE
     frontArmor: 50

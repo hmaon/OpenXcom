@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ResourcePack.h"
+#include "XcomResourcePack.h"
 #include "../Engine/Palette.h"
 #include "../Engine/Font.h"
 #include "../Engine/Surface.h"
@@ -98,8 +99,11 @@ Font *ResourcePack::getFont(const std::string &name) const
  * @param name Name of the surface.
  * @return Pointer to the surface.
  */
-Surface *ResourcePack::getSurface(const std::string &name) const
+Surface *ResourcePack::getSurface(const std::string &name) 
 {
+	XcomResourcePack *xcp = dynamic_cast<XcomResourcePack*>(this); // try to upcast self
+	if (xcp) return xcp->getSurface(name);
+	
 	return _surfaces.find(name)->second;
 }
 

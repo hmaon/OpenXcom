@@ -73,7 +73,7 @@ public:
 	/// Gets a particular font.
 	Font *getFont(const std::string &name) const;
 	/// Gets a particular surface.
-	Surface *getSurface(const std::string &name) const;
+	Surface *getSurface(const std::string &name);
 	/// Gets a particular surface set.
 	SurfaceSet *getSurfaceSet(const std::string &name) const;
 	/// Gets the list of world polygons.
