@@ -91,6 +91,11 @@ public:
 	static bool isHQXEnabled();
 	/// Checks whether OpenGL output is requested
 	static bool isOpenGLEnabled();
+<<<<<<< HEAD
+=======
+	/// Sets the _flags and _bpp variables based on game options; needed in more than one place now
+	void makeVideoFlags();
+>>>>>>> 1a71c68acfe218cbc5d30f84471b33a3490dcc4c
 };
 
 }
