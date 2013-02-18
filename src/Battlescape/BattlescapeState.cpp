@@ -1055,6 +1055,18 @@ void BattlescapeState::handleItemClick(BattleItem *item)
 			warning("STR_UNABLE_TO_USE_ALIEN_ARTIFACT_UNTIL_RESEARCHED");
 		}
 	}
+	// else, try an unarmed attack
+	else if (!item && !_battleGame->isBusy())
+	{
+		static BattleItem *meleeBattleItem = 0;
+		static int dummyId = 0xFFFFFFFF;
+
+		if (!meleeBattleItem) meleeBattleItem = new BattleItem(_game->getRuleset()->getItem("MELEE_UNARMED"), &dummyId);
+
+
+		_battleGame->getCurrentAction()->weapon = meleeBattleItem;
+		popup(new ActionMenuState(_game, _battleGame->getCurrentAction(), _icons->getX(), _icons->getY()+16));
+	}
 }
 
 /**
