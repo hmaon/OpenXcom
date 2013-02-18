@@ -219,7 +219,7 @@ void Screen::setPalette(SDL_Color* colors, int firstcolor, int ncolors)
  * Returns the screen's 8bpp palette.
  * @return Pointer to the palette's colors.
  */
-SDL_Color *Screen::getPalette() const
+SDL_Color *Screen::getPalette()
 {
 	return (SDL_Color*)deferredPalette;
 }
@@ -330,7 +330,7 @@ double Screen::getYScale() const
  * Saves a screenshot of the screen's contents.
  * @param filename Filename of the PNG file.
  */
-void Screen::screenshot(const std::string &filename) const
+void Screen::screenshot(const std::string &filename)
 {
 	std::vector<unsigned char> image;
 	SDL_Color *palette = getPalette();
