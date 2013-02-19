@@ -110,6 +110,7 @@ void createDefault()
 	setBool("allowAutoSellProduction", false);
 	setBool("showFundsOnGeoscape", false);
 	setBool("showMoreStatsInInventoryView", false);
+	setBool("allowResize", false);
 	// controls
 	setInt("keyOk", SDLK_RETURN);
 	setInt("keyCancel", SDLK_ESCAPE);

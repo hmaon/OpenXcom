@@ -432,12 +432,14 @@ bool TileEngine::canTargetUnit(Position *originVoxel, Tile *tile, Position *scan
 {
 	Position targetVoxel = Position((tile->getPosition().x * 16) + 7, (tile->getPosition().y * 16) + 8, tile->getPosition().z * 24);
 	std::vector<Position> _trajectory;
+	BattleUnit *otherUnit = tile->getUnit();
 	int targetMinHeight = targetVoxel.z - tile->getTerrainLevel();
+	if (otherUnit)
+		 targetMinHeight += otherUnit->getFloatHeight();
 	int targetMaxHeight = targetMinHeight;
 	int targetCenterHeight;
 	// if there is an other unit on target tile, we assume we want to check against this unit's height
 	int heightRange;
-	BattleUnit *otherUnit = tile->getUnit();
  
 	if (otherUnit == 0) return false; //no unit in this tile, even if it elevated and appearing in it.
 	if (otherUnit == excludeUnit) return false; //skip self
@@ -458,7 +460,7 @@ bool TileEngine::canTargetUnit(Position *originVoxel, Tile *tile, Position *scan
 	}
 
 	targetMaxHeight += heightRange;
-	targetCenterHeight=(targetMaxHeight+targetMinHeight)/2 + otherUnit->getFloatHeight();
+	targetCenterHeight=(targetMaxHeight+targetMinHeight)/2;
 	heightRange/=2;
 	if (heightRange>10) heightRange=10;
 	if (heightRange<=0) heightRange=0;
@@ -1655,8 +1657,8 @@ int TileEngine::voxelCheck(const Position& voxel, BattleUnit *excludeUnit, bool 
 		BattleUnit *unit = tile->getUnit();
 		if (unit != 0 && unit != excludeUnit)
 		{
-			if ((voxel.z%24) < (unit->getHeight()+unit->getFloatHeight()+(-tile->getTerrainLevel()))
-							&& (voxel.z%24) > (1+unit->getFloatHeight()+(-tile->getTerrainLevel())))
+			if ((voxel.z%24) < (unit->getHeight() + unit->getFloatHeight() + (-tile->getTerrainLevel()))
+				&& (voxel.z%24) > (1 + unit->getFloatHeight() + (-tile->getTerrainLevel())))
 			{
 				int x = voxel.x%16;
 				int y = voxel.y%16;
@@ -1691,7 +1693,7 @@ int TileEngine::voxelCheck(const Position& voxel, BattleUnit *excludeUnit, bool 
 			if (unit != 0 && unit != excludeUnit)
 			{
 				if ((voxel.z%24) < (unit->getHeight()+unit->getFloatHeight()+(-tile->getTerrainLevel()))-24
-								&& (voxel.z%24) > (unit->getFloatHeight()+(-tile->getTerrainLevel())-24))
+					&& (voxel.z%24) > (unit->getFloatHeight()+(-tile->getTerrainLevel())-24))
 				{
 					int x = voxel.x%16;
 					int y = voxel.y%16;
@@ -1830,6 +1832,42 @@ Tile *TileEngine::applyItemGravity(Tile *t)
 	Tile *rt = t;
 	BattleUnit *occupant = t->getUnit();
 
+	if (occupant && occupant->getArmor()->getMovementType() != MT_FLY)
+	{
+		Tile *rt1 = _save->getTile(p);
+		if (occupant->getArmor()->getSize() >= 2)
+		{
+			Position xOffset (1,0,0);
+			Position yOffset (0,1,0);
+			Tile *rt2 = _save->getTile(p + xOffset);
+			Tile *rt3 = _save->getTile(p + yOffset);
+			Tile *rt4 = _save->getTile(p + xOffset + yOffset);
+		
+			while (rt1->getMapData(MapData::O_FLOOR) == 0 && rt2->getMapData(MapData::O_FLOOR) == 0 && rt3->getMapData(MapData::O_FLOOR) == 0 && rt4->getMapData(MapData::O_FLOOR) == 0 && p.z > 0)
+			{
+				p.z--;
+				rt1 = _save->getTile(p);
+				rt2 = _save->getTile(p + xOffset);
+				rt3 = _save->getTile(p + yOffset);
+				rt4 = _save->getTile(p + xOffset + yOffset);
+			}
+		}
+		else
+		{
+			while (rt1->getMapData(MapData::O_FLOOR) == 0 && p.z > 0)
+			{
+				p.z--;
+				rt1 = _save->getTile(p);
+			}
+		}
+		if (t != rt1)
+		{
+			occupant->startWalking(Pathfinding::DIR_DOWN, rt1->getPosition(), rt1, occupant->getVisible());
+			_save->addFallingUnit(occupant);
+			_save->setUnitsFalling(true);
+		}
+	}
+
 	while (rt->getMapData(MapData::O_FLOOR) == 0 && p.z > 0)
 	{
 		p.z--;
@@ -1846,12 +1884,6 @@ Tile *TileEngine::applyItemGravity(Tile *t)
 
 		// clear tile
 		t->getInventory()->clear();
-		if (occupant && occupant->getArmor()->getMovementType() != MT_FLY)
-		{
-			occupant->startWalking(Pathfinding::DIR_DOWN, rt->getPosition(), rt, occupant->getVisible());
-			_save->addFallingUnit(occupant);
-			_save->setUnitsFalling(true);
-		}
 	}
 
 	return rt;
