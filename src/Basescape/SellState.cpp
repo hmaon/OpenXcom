@@ -40,6 +40,7 @@
 #include "../Ruleset/RuleCraftWeapon.h"
 #include "../Engine/Timer.h"
 #include "../Engine/Options.h"
+#include <limits.h> // INT_MAX??
 
 namespace OpenXcom
 {

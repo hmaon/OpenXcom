@@ -2923,6 +2923,22 @@ items:
     invHeight: 3
     clipSize: -1
     recover: false
+  - type: MELEE_UNARMED
+    weight: 0
+    bigSprite: 26
+    floorSprite: 31
+    handSprite: 104
+    hitSound: 48
+    power: 15
+    damageType: 7
+    accuracyMelee: 80
+    tuMelee: 13
+    battleType: 3
+    fixedWeapon: true
+    invWidth: 1
+    invHeight: 3
+    clipSize: -1
+    recover: false
   - type: STR_SECTOID_SOLDIER
     size: 0.0
     recover: true

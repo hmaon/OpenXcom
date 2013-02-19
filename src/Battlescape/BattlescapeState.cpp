@@ -348,6 +348,9 @@ BattlescapeState::BattlescapeState(Game *game) : State(game), _popups()
 
 	isMouseScrolling = false;
 	isMouseScrolled = false;
+
+	meleeBattleItemId = (*(_save->getCurrentItemId()))++;
+	meleeBattleItem = new BattleItem(_game->getRuleset()->getItem("MELEE_UNARMED"), &meleeBattleItemId);
 }
 
 
@@ -359,6 +362,7 @@ BattlescapeState::~BattlescapeState()
 	delete _animTimer;
 	delete _gameTimer;
 	delete _battleGame;
+	delete meleeBattleItem;
 }
 
 /**
@@ -1054,6 +1058,12 @@ void BattlescapeState::handleItemClick(BattleItem *item)
 		{
 			warning("STR_UNABLE_TO_USE_ALIEN_ARTIFACT_UNTIL_RESEARCHED");
 		}
+	}
+	// else, try an unarmed attack
+	else if (!item && !_battleGame->isBusy())
+	{
+		_battleGame->getCurrentAction()->weapon = meleeBattleItem;
+		popup(new ActionMenuState(_game, _battleGame->getCurrentAction(), _icons->getX(), _icons->getY()+16));
 	}
 }
 

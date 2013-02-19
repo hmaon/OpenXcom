@@ -20,6 +20,7 @@
 #define OPENXCOM_BATTLESCAPESTATE_H
 
 #include "../Engine/State.h"
+#include "../Savegame/BattleItem.h"
 #include "Position.h"
 
 #include <vector>
@@ -80,6 +81,9 @@ private:
 	int totalMouseMoveX, totalMouseMoveY;
 	int lastSucTotalMouseMoveX, lastSucTotalMouseMoveY;
 	bool mouseMovedOverThreshold;
+
+	BattleItem *meleeBattleItem;
+	int meleeBattleItemId;
 
 	void selectNextPlayerUnit(bool checkReselect, bool setReselect);
 	void selectPreviousPlayerUnit(bool checkReselect);

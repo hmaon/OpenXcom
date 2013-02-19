@@ -41,6 +41,7 @@
 #include "../Savegame/SavedGame.h"
 #include "../Menu/ErrorMessageState.h"
 #include "../Engine/Options.h"
+#include <limits.h> // INT_MAX ???
 
 namespace OpenXcom
 {
