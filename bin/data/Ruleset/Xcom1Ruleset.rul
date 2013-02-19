@@ -1645,7 +1645,7 @@ items:
     costSell: 100
     transferTime: 48
     weight: 1
-    bigSprite: 12
+    bigSprite: -1 # It must be -1 to avoid putting it to the base-defense battlescape. Original value: 12
     floorSprite: 12
     hitSound: 13
     hitAnimation: 26
@@ -1685,7 +1685,7 @@ items:
     costSell: 2250
     transferTime: 48
     weight: 1
-    bigSprite: 16
+    bigSprite: -1 # It must be -1 to avoid putting it to the base-defense battlescape. Original value: 16
     floorSprite: 16
     hitSound: 0
     hitAnimation: 0
@@ -1773,7 +1773,7 @@ items:
     transferTime: 48
     weight: 1
     weight: 3
-    bigSprite: 36
+    bigSprite: -1 # It must be -1 to avoid putting it to the base-defense battlescape. Original value: 36
     floorSprite: 35
     hitSound: 0
     hitAnimation: 0
@@ -4647,7 +4647,8 @@ units:
     armor: CYBERDISC_ARMOR
     standHeight: 15
     kneelHeight: 15
-    loftemps: 4
+    floatHeight: 2
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 20
     deathSound: 23
     moveSound: 40
@@ -4672,6 +4673,7 @@ units:
     armor: FLOATER_ARMOR0
     standHeight: 21
     kneelHeight: 16
+    floatHeight: 2
     loftemps: 3
     value: 12
     deathSound: 10
@@ -4696,6 +4698,7 @@ units:
     armor: FLOATER_ARMOR0
     standHeight: 21
     kneelHeight: 16
+    floatHeight: 2
     loftemps: 3
     value: 12
     deathSound: 10
@@ -4720,6 +4723,7 @@ units:
     armor: FLOATER_ARMOR0
     standHeight: 21
     kneelHeight: 16
+    floatHeight: 2
     loftemps: 3
     value: 12
     deathSound: 10
@@ -4744,6 +4748,7 @@ units:
     armor: FLOATER_ARMOR0
     standHeight: 21
     kneelHeight: 16
+    floatHeight: 2
     loftemps: 3
     value: 16
     deathSound: 10
@@ -4768,6 +4773,7 @@ units:
     armor: FLOATER_ARMOR1
     standHeight: 21
     kneelHeight: 16
+    floatHeight: 2
     loftemps: 3
     value: 25
     deathSound: 10
@@ -4792,6 +4798,7 @@ units:
     armor: FLOATER_ARMOR2
     standHeight: 21
     kneelHeight: 16
+    floatHeight: 2
     loftemps: 3
     value: 35
     deathSound: 10
@@ -4815,7 +4822,7 @@ units:
     armor: REAPER_ARMOR
     standHeight: 23
     kneelHeight: 16
-    loftemps: 4
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 25
     deathSound: 48
     intelligence: 2
@@ -4833,11 +4840,11 @@ units:
       strength: 60
       psiStrength: 100
       psiSkill: 0
-      melee: 0
+      melee: 70
     armor: TANK_ARMOR
-    standHeight: 15
-    kneelHeight: 15
-    loftemps: 4
+    standHeight: 16
+    kneelHeight: 16
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 20
     deathSound: 23
     moveSound: 14	
@@ -4854,11 +4861,11 @@ units:
       strength: 60
       psiStrength: 100
       psiSkill: 0
-      melee: 0
+      melee: 70
     armor: TANK_ARMOR
-    standHeight: 15
-    kneelHeight: 15
-    loftemps: 4
+    standHeight: 16
+    kneelHeight: 16
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 20
     deathSound: 23
     moveSound: 14
@@ -4875,11 +4882,11 @@ units:
       strength: 60
       psiStrength: 100
       psiSkill: 0
-      melee: 0
+      melee: 7
     armor: TANK_ARMOR
-    standHeight: 15
-    kneelHeight: 15
-    loftemps: 4
+    standHeight: 16
+    kneelHeight: 16
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 20
     deathSound: 23
     moveSound: 14
@@ -4896,11 +4903,12 @@ units:
       strength: 60
       psiStrength: 100
       psiSkill: 0
-      melee: 0
+      melee: 70
     armor: HOVERTANK_ARMOR
-    standHeight: 15
-    kneelHeight: 15
-    loftemps: 4
+    standHeight: 12
+    kneelHeight: 12
+    floatHeight: 6
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 20
     deathSound: 23
     moveSound: 15
@@ -4917,11 +4925,12 @@ units:
       strength: 60
       psiStrength: 100
       psiSkill: 0
-      melee: 0
+      melee: 60
     armor: HOVERTANK_ARMOR
-    standHeight: 15
-    kneelHeight: 15
-    loftemps: 4
+    standHeight: 12
+    kneelHeight: 12
+    floatHeight: 6
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 20
     deathSound: 23
     moveSound: 15
@@ -5244,7 +5253,7 @@ units:
     armor: CHRYSSALID_ARMOR
     standHeight: 21
     kneelHeight: 16
-    loftemps: 4
+    loftemps: 3
     value: 25
     deathSound: 49
     aggroSound: 49
@@ -5269,7 +5278,7 @@ units:
     armor: SILACOID_ARMOR
     standHeight: 10
     kneelHeight: 10
-    loftemps: 2
+    loftemps: 5
     value: 20
     deathSound: 51
     moveSound: 47
@@ -5292,8 +5301,9 @@ units:
       psiSkill: 0
       melee: 80
     armor: CELATID_ARMOR
-    standHeight: 10
-    kneelHeight: 10
+    standHeight: 12
+    kneelHeight: 12
+    floatHeight: 6
     loftemps: 2
     value: 20
     deathSound: 51
@@ -5318,7 +5328,7 @@ units:
     armor: SECTOPOD_ARMOR
     standHeight: 23
     kneelHeight: 16
-    loftemps: 2
+    loftempsSet: [ 104, 107, 101, 98 ]
     value: 30
     deathSound: 23
     intelligence: 4

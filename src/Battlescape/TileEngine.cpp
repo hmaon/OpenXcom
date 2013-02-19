@@ -242,7 +242,7 @@ bool TileEngine::calculateFOV(BattleUnit *unit)
 		return false;
 	Position pos = unit->getPosition();
 
-	if ((unit->getHeight() + -_save->getTile(unit->getPosition())->getTerrainLevel()) >= 24 + 4)
+	if ((unit->getHeight() + unit->getFloatHeight() + -_save->getTile(unit->getPosition())->getTerrainLevel()) >= 24 + 4)
 	{
 		++pos.z;
 	}
@@ -251,7 +251,7 @@ bool TileEngine::calculateFOV(BattleUnit *unit)
 		if (direction%2)
 		{
 			y1 = 0;
-			y2 = MAX_VIEW_DISTANCE - x;
+			y2 = MAX_VIEW_DISTANCE;
 		}
 		else
 		{
@@ -379,7 +379,7 @@ bool TileEngine::visible(BattleUnit *currentUnit, Tile *tile)
 	Position originVoxel;
 	originVoxel = Position((currentUnit->getPosition().x * 16) + 7, (currentUnit->getPosition().y * 16) + 8, currentUnit->getPosition().z*24);
 	originVoxel.z += -_save->getTile(currentUnit->getPosition())->getTerrainLevel();
-	originVoxel.z += currentUnit->getHeight()-1; //one voxel lower (eye level)
+	originVoxel.z += currentUnit->getHeight() + currentUnit->getFloatHeight() - 1; //one voxel lower (eye level)
 
 	// fix!!! need to add flying elevation
 	bool unitSeen = false;
@@ -442,6 +442,10 @@ bool TileEngine::canTargetUnit(Position *originVoxel, Tile *tile, Position *scan
 	if (otherUnit == 0) return false; //no unit in this tile, even if it elevated and appearing in it.
 	if (otherUnit == excludeUnit) return false; //skip self
 	int unitRadius = otherUnit->getLoftemps(); //width == loft in default loftemps set
+	if (otherUnit->getArmor()->getSize() > 1)
+	{
+		unitRadius = 6;
+	}
 	int sliceTargets[10]={0,0, 0,unitRadius, 0,-unitRadius, unitRadius,0, -unitRadius,0};
  
 	if (!otherUnit->isOut())
@@ -454,7 +458,7 @@ bool TileEngine::canTargetUnit(Position *originVoxel, Tile *tile, Position *scan
 	}
 
 	targetMaxHeight += heightRange;
-	targetCenterHeight=(targetMaxHeight+targetMinHeight)/2;
+	targetCenterHeight=(targetMaxHeight+targetMinHeight)/2 + otherUnit->getFloatHeight();
 	heightRange/=2;
 	if (heightRange>10) heightRange=10;
 	if (heightRange<=0) heightRange=0;
@@ -812,7 +816,24 @@ void TileEngine::explode(const Position &center, int power, ItemDamageType type,
 		power /= 2;
 	}
 
-	for (int fi = -90; fi <= 90; fi += 10)
+	int exHeight = Options::getInt("battleExplosionHeight");
+	int vertdec = 1000; //default flat explosion
+	if (exHeight<0) exHeight = 0;
+	if (exHeight>3) exHeight = 3;
+	switch (exHeight)
+	{
+	case 1:
+		vertdec = 30;
+		break;
+	case 2:
+		vertdec = 10;
+		break;
+	case 3:
+		vertdec = 5;
+	}
+
+
+	for (int fi = -90; fi <= 90; fi += 5)
 //	for (int fi = 0; fi <= 0; fi += 10)
 	{
 		// raytrace every 3 degrees makes sure we cover all tiles in a circle.
@@ -847,6 +868,7 @@ void TileEngine::explode(const Position &center, int power, ItemDamageType type,
 				{
 					power_ -= (horizontalBlockage(origin, dest, type) + verticalBlockage(origin, dest, type)) * 2;
 					power_ -= 10; // explosive damage decreases by 10 per tile
+					if (origin->getPosition().z != tileZ) power_ -= vertdec; //3d explosion factor
 				}
 
 				if (power_ > 0)
@@ -1633,11 +1655,28 @@ int TileEngine::voxelCheck(const Position& voxel, BattleUnit *excludeUnit, bool 
 		BattleUnit *unit = tile->getUnit();
 		if (unit != 0 && unit != excludeUnit)
 		{
-			if ((voxel.z%24) < (unit->getHeight()+(-tile->getTerrainLevel())) && (voxel.z%24) > (1+(-tile->getTerrainLevel())))
+			if ((voxel.z%24) < (unit->getHeight()+unit->getFloatHeight()+(-tile->getTerrainLevel()))
+							&& (voxel.z%24) > (1+unit->getFloatHeight()+(-tile->getTerrainLevel())))
 			{
 				int x = voxel.x%16;
 				int y = voxel.y%16;
-				int idx = (unit->getLoftemps() * 16) + y;
+				int part = 0;
+				if (unit->getArmor()->getSize() > 1)
+				{
+					if (tile->getPosition().x - unit->getPosition().x == 1)
+					{
+						part = 1;
+					}
+					if (tile->getPosition().y - unit->getPosition().y == 1)
+					{
+						part = 2;
+					}
+					if (tile->getPosition().x - unit->getPosition().x == 1 && tile->getPosition().y - unit->getPosition().y == 1)
+					{
+						part = 3;
+					}
+				}
+				int idx = (unit->getLoftemps(part) * 16) + y;
 				if (_voxelData->at(idx) & (1 << x))
 				{
 					return 4;
@@ -1651,11 +1690,28 @@ int TileEngine::voxelCheck(const Position& voxel, BattleUnit *excludeUnit, bool 
 			BattleUnit *unit = below->getUnit();
 			if (unit != 0 && unit != excludeUnit)
 			{
-				if ((voxel.z%24) < ((unit->getHeight()+(-below->getTerrainLevel()))-24))
+				if ((voxel.z%24) < (unit->getHeight()+unit->getFloatHeight()+(-tile->getTerrainLevel()))-24
+								&& (voxel.z%24) > (unit->getFloatHeight()+(-tile->getTerrainLevel())-24))
 				{
 					int x = voxel.x%16;
 					int y = voxel.y%16;
-					int idx = (unit->getLoftemps() * 16) + y;
+					int part = 0;
+					if (unit->getArmor()->getSize() > 1)
+					{
+						if (below->getPosition().x - unit->getPosition().x == 1)
+						{
+							part = 1;
+						}
+						if (below->getPosition().y - unit->getPosition().y == 1)
+						{
+							part = 2;
+						}
+						if (below->getPosition().x - unit->getPosition().x == 1 && below->getPosition().y - unit->getPosition().y == 1)
+						{
+							part = 3;
+						}
+					}
+					int idx = (unit->getLoftemps(part) * 16) + y;
 					if (_voxelData->at(idx) & (1 << x))
 					{
 						return 4;

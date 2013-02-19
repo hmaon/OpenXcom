@@ -73,6 +73,14 @@ PFNGLUNIFORM1IPROC glUniform1i = 0;
 PFNGLUNIFORM2FVPROC glUniform2fv = 0;
 PFNGLUNIFORM4FVPROC glUniform4fv = 0;
 
+void * (APIENTRYP glXGetCurrentDisplay)() = 0;
+Uint32 (APIENTRYP glXGetCurrentDrawable)() = 0;
+void (APIENTRYP glXSwapIntervalEXT)(void *display, Uint32 GLXDrawable, int interval);
+
+Uint32 (APIENTRYP wglSwapIntervalEXT)(int interval);
+
+
+
   void OpenGL::resize(unsigned width, unsigned height) {
     if(gltexture == 0) glGenTextures(1, &gltexture);
 	glErrorCheck();
@@ -97,7 +105,7 @@ PFNGLUNIFORM4FVPROC glUniform4fv = 0;
 
   bool OpenGL::lock(uint32_t *&data, unsigned &pitch) {
     pitch = iwidth * ibpp;
-    return data = buffer;
+    return (data = buffer);
   }
 
   void OpenGL::clear() {
@@ -263,6 +271,14 @@ PFNGLUNIFORM4FVPROC glUniform4fv = 0;
     glUniform2fv = (PFNGLUNIFORM2FVPROC)glGetProcAddress("glUniform2fv");
     glUniform4fv = (PFNGLUNIFORM4FVPROC)glGetProcAddress("glUniform4fv");
 
+	glXGetCurrentDisplay = (void* (APIENTRYP)())glGetProcAddress("glXGetCurrentDisplay");
+	glXGetCurrentDrawable = (Uint32 (APIENTRYP)())glGetProcAddress("glXGetCurrentDrawable");
+	glXSwapIntervalEXT = (void (APIENTRYP)(void*, Uint32, int))glGetProcAddress("glXSwapIntervalEXT");
+
+	wglSwapIntervalEXT = (Uint32 (APIENTRYP)(int))glGetProcAddress("wglSwapIntervalEXT");
+
+
+
     shader_support = glCreateProgram && glUseProgram && glCreateShader
     && glDeleteShader && glShaderSource && glCompileShader && glAttachShader
     && glDetachShader && glLinkProgram && glGetUniformLocation
@@ -273,6 +289,25 @@ PFNGLUNIFORM4FVPROC glUniform4fv = 0;
     //create surface texture
     resize(w, h);
   }
+
+	void OpenGL::setVSync(bool sync)
+	{
+		const int interval = sync ? 1 : 0;
+		if (glXGetCurrentDisplay)
+		{
+			void *dpy = glXGetCurrentDisplay();
+			Uint32 drawable = glXGetCurrentDrawable();
+
+			if (drawable) {
+				glXSwapIntervalEXT(dpy, drawable, interval);
+				Log(LOG_INFO) << "Made an attempt to set vsync via GLX.";
+			}
+		} else if (wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(interval);
+			Log(LOG_INFO) << "Made an attempt to set vsync via WGL.";
+		}
+	}
 
   void OpenGL::term() {
     if(gltexture) {
