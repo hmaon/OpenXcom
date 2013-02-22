@@ -33,7 +33,7 @@
 #include "CrossPlatform.h"
 
 #ifndef NO_GOOGLE_SPARSEHASH
-#include <sparsehash/dense_hash_map> // once we have something like libboost, we can replace this with unordered_map
+#include <google/dense_hash_map> // once we have something like libboost, we can replace this with unordered_map
 #define OPTIONS_MAP_TYPE google::dense_hash_map
 #else
 #define OPTIONS_MAP_TYPE std::map
