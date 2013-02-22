@@ -33,16 +33,38 @@
 #include "CrossPlatform.h"
 
 
+#if !defined(_OPTIONS_HASH_MAP) && \
+	!defined(_OPTIONS_google_sparsehash) && \
+	!defined(_OPTIONS_boost_unordered_map) && \
+	!defined(_OPTIONS_STL_map)
+
+// if hash_map doesn't compile, comment out the following line
+#define _OPTIONS_HASH_MAP
+
+#endif
 
 
 #ifdef _OPTIONS_HASH_MAP
 
 #include<hash_map> // a non-standard hash table that's likely actually available
 #ifdef _MSC_VER
-#define OPTIONS_MAP_TYPE stdext::hash_map
+#define HASH_MAP_NAMESPACE stdext
 #elif defined(__GNUC__)
-#define OPTIONS_MAP_TYPE __gnu_cxx::hash_map
+#define HASH_MAP_NAMESPACE __gnu_cxx
 #endif
+
+#define OPTIONS_MAP_TYPE HASH_MAP_NAMESPACE::hash_map
+
+namespace HASH_MAP_NAMESPACE {
+	// from http://gcc.gnu.org/ml/libstdc++/2007-08/msg00057.html
+template <>
+struct hash<std::string> {
+	size_t operator() (const std::string& x) const {
+		return hash<const char*>()(x.c_str());
+		// hash<const char*> already exists
+	}
+};
+}
 
 #elif defined(_OPTIONS_google_sparasehash)
 
