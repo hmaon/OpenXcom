@@ -339,7 +339,7 @@ bool showHelp(int argc, char** args)
  */
 bool init(int argc, char** args)
 {
-#ifdef _OPTIONS_google_sparasehash
+#ifdef _OPTIONS_google_sparsehash
 	_options.set_empty_key("\n\t: ```this is not a valid option, clearly```");
 	_optionsCache.set_empty_key("\n\t: ```this is not a valid option, clearly```");
 #endif
