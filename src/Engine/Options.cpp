@@ -32,12 +32,35 @@
 #include "Logger.h"
 #include "CrossPlatform.h"
 
-#ifndef NO_GOOGLE_SPARSEHASH
+
+
+
+#ifdef _OPTIONS_HASH_MAP
+
+#include<hash_map> // a non-standard hash table that's likely actually available
+#ifdef _MSC_VER
+#define OPTIONS_MAP_TYPE stdext::hash_map
+#elif defined(__GNUC__)
+#define OPTIONS_MAP_TYPE __gnu_cxx::hash_map
+#endif
+
+#elif defined(_OPTIONS_google_sparasehash)
+
 #include <google/dense_hash_map> // once we have something like libboost, we can replace this with unordered_map
 #define OPTIONS_MAP_TYPE google::dense_hash_map
-#else
+
+#elif defined (_OPTIONS_boost_unordered_map)
+
+// TODO whatever this is
+
+#endif
+
+#ifndef OPTIONS_MAP_TYPE
+// use the stupid R-B tree if there's no real hash table available
 #define OPTIONS_MAP_TYPE std::map
 #endif
+
+
 
 namespace OpenXcom
 {
@@ -291,8 +314,10 @@ bool showHelp(int argc, char** args)
  */
 bool init(int argc, char** args)
 {
+#ifdef _OPTIONS_google_sparasehash
 	_options.set_empty_key("\n\t: ```this is not a valid option, clearly```");
 	_optionsCache.set_empty_key("\n\t: ```this is not a valid option, clearly```");
+#endif
 
 	if (showHelp(argc, args))
 		return false;
