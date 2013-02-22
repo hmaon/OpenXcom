@@ -32,6 +32,13 @@
 #include "Logger.h"
 #include "CrossPlatform.h"
 
+#ifndef NO_GOOGLE_SPARSEHASH
+#include <sparsehash/dense_hash_map> // once we have something like libboost, we can replace this with unordered_map
+#define OPTIONS_MAP_TYPE google::dense_hash_map
+#else
+#define OPTIONS_MAP_TYPE std::map
+#endif
+
 namespace OpenXcom
 {
 namespace Options
@@ -43,7 +50,18 @@ std::vector<std::string> _dataList;
 std::string _userFolder = "";
 std::string _configFolder = "";
 std::vector<std::string> _userList;
-std::map<std::string, std::string> _options;
+OPTIONS_MAP_TYPE<std::string, std::string> _options;
+
+typedef union 
+{
+	int i;
+	bool b;
+} u_option;
+
+OPTIONS_MAP_TYPE<std::string, u_option> _optionsCache; // don't parse ints and bools every time we need to access them
+// this optimization may seem like too much but Options::getX() calls end up in AI loops and suddenly performance matters, go figure
+
+
 std::vector<std::string> _rulesets;
 
 /**
@@ -172,6 +190,8 @@ void createDefault()
 
 	_rulesets.clear();
 	_rulesets.push_back("Xcom1Ruleset");
+
+	_optionsCache.clear(); // don't cache default values; let them be overwritten by loaded values
 }
 
 /**
@@ -195,7 +215,7 @@ void loadArgs(int argc, char** args)
 			std::transform(argname.begin(), argname.end(), argname.begin(), ::tolower);
 			if (argc > i + 1)
 			{
-				std::map<std::string, std::string>::iterator it = _options.find(argname);
+				OPTIONS_MAP_TYPE<std::string, std::string>::iterator it = _options.find(argname);
 				if (it != _options.end())
 				{
 					it->second = args[i+1];
@@ -273,6 +293,9 @@ bool showHelp(int argc, char** args)
  */
 bool init(int argc, char** args)
 {
+	_options.set_empty_key("\n\t: ```this is not a valid option, clearly```");
+	_optionsCache.set_empty_key("\n\t: ```this is not a valid option, clearly```");
+
 	if (showHelp(argc, args))
 		return false;
 	createDefault();
@@ -398,7 +421,13 @@ void save(const std::string &filename)
 	YAML::Emitter out;
 
 	out << YAML::BeginMap;
-	out << YAML::Key << "options" << YAML::Value << _options;
+	out << YAML::Key << "options" << YAML::Value; // << _options;
+	out << YAML::BeginMap;
+	for (OPTIONS_MAP_TYPE<std::string, std::string>::iterator it = _options.begin(); it != _options.end(); ++it)
+	{
+		out << YAML::Key << it->first << YAML::Value << it->second;
+	}
+	out << YAML::EndMap;
 	out << YAML::Key << "rulesets" << YAML::Value << _rulesets;
 	out << YAML::EndMap;
 
@@ -471,10 +500,14 @@ std::string getString(const std::string& id)
  */
 int getInt(const std::string& id)
 {
+	OPTIONS_MAP_TYPE<std::string, u_option>::iterator it = _optionsCache.find(id);
+	if (it != _optionsCache.end()) return it->second.i;
+
 	std::stringstream ss;
 	int value;
 	ss << std::dec << _options[id];
 	ss >> std::dec >> value;
+	_optionsCache[id].i = value;
 	return value;
 }
 
@@ -485,10 +518,14 @@ int getInt(const std::string& id)
  */
 bool getBool(const std::string& id)
 {
+	OPTIONS_MAP_TYPE<std::string, u_option>::iterator it = _optionsCache.find(id);
+	if (it != _optionsCache.end()) return it->second.b;
+
 	std::stringstream ss;
 	bool value;
 	ss << std::boolalpha << _options[id];
 	ss >> std::boolalpha >> value;
+	_optionsCache[id].b = value;
 	return value;
 }
 
@@ -509,6 +546,7 @@ void setString(const std::string& id, const std::string& value)
  */
 void setInt(const std::string& id, int value)
 {
+	_optionsCache[id].i = value;
 	std::stringstream ss;
 	ss << std::dec << value;
 	_options[id] = ss.str();
@@ -521,6 +559,7 @@ void setInt(const std::string& id, int value)
  */
 void setBool(const std::string& id, bool value)
 {
+	_optionsCache[id].b = value;
 	std::stringstream ss;
 	ss << std::boolalpha << value;
 	_options[id] = ss.str();
