@@ -56,6 +56,7 @@
 
 #define OPTIONS_MAP_TYPE HASH_MAP_NAMESPACE::hash_map
 
+#if !defined(_MSC_VER)
 namespace HASH_MAP_NAMESPACE {
 	// from http://gcc.gnu.org/ml/libstdc++/2007-08/msg00057.html
 template <>
@@ -66,6 +67,7 @@ struct hash<std::string> {
 	}
 };
 }
+#endif
 
 #elif defined(_OPTIONS_google_sparsehash)
 
