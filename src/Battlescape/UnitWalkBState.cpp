@@ -69,6 +69,19 @@ void UnitWalkBState::think()
 {
 	bool unitspotted = false;
 	bool onScreen = (_unit->getVisible() && _parent->getMap()->getCamera()->isOnScreen(_unit->getPosition()));
+	Tile *tileBelow = _parent->getSave()->getTile(_unit->getPosition() + Position(0,0,-1));
+	bool largeCheck = true;
+	for (int x = _unit->getArmor()->getSize() - 1; x != 0 && largeCheck; --x)
+	{
+		for (int y = _unit->getArmor()->getSize() - 1; y != 0 && largeCheck; --y)
+		{
+			Tile *otherTileBelow = _parent->getSave()->getTile(_unit->getPosition() + Position(x,y,-1));
+			if (!_parent->getSave()->getTile(_unit->getPosition() + Position(x,y,0))->hasNoFloor(otherTileBelow) || _unit->getArmor()->getMovementType() == MT_FLY)
+				largeCheck = false;
+		}
+	}
+	_falling = largeCheck && _unit->getPosition().z != 0 && _unit->getTile()->hasNoFloor(tileBelow) && _unit->getArmor()->getMovementType() != MT_FLY;
+
 	if (_unit->isOut())
 	{
 		_pf->abortPath();
@@ -78,21 +91,22 @@ void UnitWalkBState::think()
 
 	if (_unit->getStatus() == STATUS_WALKING || _unit->getStatus() == STATUS_FLYING)
 	{
-		playMovementSound();
-
-		_unit->keepWalking(onScreen); // advances the phase
+		if ((_parent->getSave()->getTile(_unit->getDestination())->getUnit() == 0) || // next tile must be not occupied
+			(_parent->getSave()->getTile(_unit->getDestination())->getUnit() == _unit))
+		{
+			playMovementSound();
+			_unit->keepWalking(onScreen); // advances the phase
+		}
+		else
+		{
+			_unit->turn();	// turn to undiscovered unit
+			_pf->abortPath();
+		}
 
 		// unit moved from one tile to the other, update the tiles
 		if (_unit->getPosition() != _unit->getLastPosition())
-		{
-			if (_unit->getPosition().z < _unit->getLastPosition().z && _unit->getArmor()->getMovementType() != MT_FLY)
-			{
-				_falling = true;
-			}
-			else if (_falling)
-			{
-				_falling = false;
-			}
+		{	
+			_falling = largeCheck && _unit->getPosition().z != 0 && _unit->getTile()->hasNoFloor(tileBelow) && _unit->getArmor()->getMovementType() != MT_FLY;
 
 			int size = _unit->getArmor()->getSize() - 1;
 			for (int x = size; x >= 0; x--)
@@ -163,7 +177,7 @@ void UnitWalkBState::think()
 			// check for reaction fire
 			if (!_falling && !_action.reckless && _terrain->checkReactionFire(_unit, &action))
 			{
-				_parent->popState();
+				postPathProcedures();
 				_parent->statePushBack(new ProjectileFlyBState(_parent, action));
 				// unit got fired upon - stop walking
 				_pf->abortPath();
@@ -193,7 +207,7 @@ void UnitWalkBState::think()
 	{
         if (unitspotted && _action.desperate) Log(LOG_INFO) << "desperate action!";
 		// check if we did spot new units
-		if (unitspotted && !_action.desperate && _unit->getCharging() == 0)
+		if (unitspotted && !_action.desperate && _unit->getCharging() == 0 && !_falling)
 		{
 			_parent->getMap()->cacheUnit(_unit);
 			_pf->abortPath();
@@ -209,6 +223,10 @@ void UnitWalkBState::think()
 			_parent->setStateInterval(0);
 		}
 		int dir = _pf->getStartDirection();
+		if (_falling)
+		{
+			dir = Pathfinding::DIR_DOWN;
+		}
 		if (_unit->getTurretType() > -1 && _action.strafe)
 		{
 			// Turret-and-Ctrl-down, turn the turret instead of moving.
@@ -301,6 +319,11 @@ void UnitWalkBState::think()
 
 			// now start moving
 			dir = _pf->dequeuePath();
+			if (_falling)
+			{
+				dir = Pathfinding::DIR_DOWN;
+			}
+
 			if (_unit->spendTimeUnits(tu))
 			{
 				if (_unit->spendEnergy(energy))
@@ -312,7 +335,7 @@ void UnitWalkBState::think()
 				else
 				{
 					_action.result = "STR_NOT_ENOUGH_ENERGY";
-				_parent->getMap()->cacheUnit(_unit);
+					_parent->getMap()->cacheUnit(_unit);
 					_parent->popState();
 				}
 			}
@@ -330,13 +353,9 @@ void UnitWalkBState::think()
 					// This is where we fake out the strafe movement direction so the unit "moonwalks"
 					int dirTemp = _unit->getDirection();
 					_unit->setDirection(_unit->getFaceDirection());
-					_parent->getMap()->cacheUnit(_unit);
 					_unit->setDirection(dirTemp);
 				}
-				else
-				{
-					_parent->getMap()->cacheUnit(_unit);
-				}
+				_parent->getMap()->cacheUnit(_unit);
 			}
 		}
 		else
@@ -363,7 +382,7 @@ void UnitWalkBState::think()
 		// make sure the unit sprites are up to date
 		if (onScreen)
 			_parent->getMap()->cacheUnit(_unit);
-		if (unitspotted && _unit->getStatus() != STATUS_PANICKING && _unit->getCharging() == 0)
+		if (unitspotted && _unit->getStatus() != STATUS_PANICKING && _unit->getCharging() == 0 && !_falling)
 		{
 			_pf->abortPath();
 			_parent->getMap()->cacheUnit(_unit);
@@ -377,6 +396,7 @@ void UnitWalkBState::think()
  */
 void UnitWalkBState::cancel()
 {
+	if (_parent->getSave()->getSide() == FACTION_PLAYER)
 	_pf->abortPath();
 }
 
@@ -403,7 +423,8 @@ void UnitWalkBState::postPathProcedures()
 	_terrain->calculateUnitLighting();
 	_terrain->calculateFOV(_unit);
 	_parent->getMap()->cacheUnit(_unit);
-	_parent->popState();
+	if (!_falling)
+		_parent->popState();
 }
 
 /*
@@ -459,7 +480,7 @@ void UnitWalkBState::playMovementSound()
 		else
 		{
 			// play default flying sound
-			if (_unit->getWalkingPhase() == 0)
+			if (_unit->getWalkingPhase() == 0 && !_falling)
 			{
 				_parent->getResourcePack()->getSound("BATTLE.CAT", 15)->play();
 			}

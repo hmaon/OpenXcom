@@ -1492,18 +1492,18 @@ bool BattleUnit::getVisible() const
  * Sets the unit's tile it's standing on
  * @param tile
  */
-void BattleUnit::setTile(Tile *tile)
+void BattleUnit::setTile(Tile *tile, Tile *tileBelow)
 {
 	_tile = tile;
 	if (!_tile)
 		return;
 	// unit could have changed from flying to walking or vice versa
-	if (_status == STATUS_WALKING && !_tile->getMapData(MapData::O_FLOOR) && _armor->getMovementType() == MT_FLY)
+	if (_status == STATUS_WALKING && _tile->hasNoFloor(tileBelow) && _armor->getMovementType() == MT_FLY)
 	{
 		_status = STATUS_FLYING;
 		_floating = true;
 	}
-	else if (_status == STATUS_FLYING && _tile->getMapData(MapData::O_FLOOR))
+	else if (_status == STATUS_FLYING && !_tile->hasNoFloor(tileBelow))
 	{
 		_status = STATUS_WALKING;
 		_floating = false;
@@ -1891,6 +1891,8 @@ void BattleUnit::heal(int part, int healAmount, int healthAmount)
 		return;
 	_fatalWounds[part] -= healAmount;
 	_health += healthAmount;
+	if (_health > getStats()->health)
+		_health = getStats()->health;
 }
 
 /**
@@ -1905,6 +1907,7 @@ void BattleUnit::painKillers ()
 	_needPainKiller = false;
 	int lostHealth = getStats()->health - _health;
 	_morale += lostHealth;
+	if (_morale > 100) _morale = 100;
 }
 
 /**
@@ -1915,6 +1918,8 @@ void BattleUnit::painKillers ()
 void BattleUnit::stimulant (int energy, int s)
 {
 	_energy += energy;
+	if (_energy > getStats()->stamina)
+		_energy = getStats()->stamina;
 	healStun (s);
 }
 
