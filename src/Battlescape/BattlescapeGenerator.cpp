@@ -463,7 +463,11 @@ void BattlescapeGenerator::run()
 	{
 		for (int i = 0; i < _save->getWidth() * _save->getLength() * _save->getHeight(); ++i)
 		{
-			if (_save->getTiles()[i]->getMapData(MapData::O_FLOOR) && _save->getTiles()[i]->getMapData(MapData::O_FLOOR)->getSpecialType() == START_POINT)
+			if (_save->getTiles()[i]->getMapData(MapData::O_FLOOR) &&
+				(_save->getTiles()[i]->getMapData(MapData::O_FLOOR)->getSpecialType() == START_POINT ||
+				(_save->getTiles()[i]->getPosition().z == 1 &&
+				_save->getTiles()[i]->getMapData(MapData::O_FLOOR)->isGravLift() &&
+				_save->getTiles()[i]->getMapData(MapData::O_OBJECT))))
 				_save->getTiles()[i]->setDiscovered(true, 2);
 		}
 	}
@@ -1611,7 +1615,7 @@ void BattlescapeGenerator::explodePowerSources()
 			pos.x = _save->getTiles()[i]->getPosition().x*16;
 			pos.y = _save->getTiles()[i]->getPosition().y*16;
 			pos.z = (_save->getTiles()[i]->getPosition().z*24) +12;
-			_save->getTileEngine()->explode(pos, 240+RNG::generate(0,70), DT_HE, 11);
+			_save->getTileEngine()->explode(pos, 180+RNG::generate(0,70), DT_HE, 11);
 		}
 	}
 }

@@ -172,6 +172,7 @@ void createDefault()
 	setInt("pauseMode", 0);
 	setBool("alienContainmentHasUpperLimit", false);
 	setBool("canSellLiveAliens", false);
+	setBool("canManufactureMoreItemsPerHour", false);
 	setBool("customInitialBase", false);
 	setBool("aggressiveRetaliation", false);
 	setBool("strafe", false);
