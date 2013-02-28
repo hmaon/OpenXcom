@@ -474,7 +474,6 @@ void Ruleset::loadFile(const std::string &filename)
 				{
 					rule = new AlienDeployment(type);
 					_alienDeployments[type] = rule;
-					if (type != "STR_BASE_DEFENSE")
 					_deploymentsIndex.push_back(type);
 				}
 				rule->load(*j);
@@ -1347,5 +1346,10 @@ const City *Ruleset::locateCity(double lon, double lat) const
 const std::vector<std::vector<int> > &Ruleset::getAlienItemLevels() const
 {
 	return _alienItemLevels;
+}
+
+const YAML::Node &Ruleset::getStartingBase()
+{
+	return *_startingBase->begin();
 }
 }

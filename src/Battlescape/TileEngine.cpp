@@ -1037,7 +1037,22 @@ void TileEngine::explode(const Position &center, int power, ItemDamageType type,
 					ret = tilesAffected.insert(dest); // check if we had this tile already
 					if (ret.second)
 					{
-						if (type == DT_HE || type == DT_STUN)
+						if (type == DT_STUN)
+						{
+							// power 50 - 150%
+							if (dest->getUnit())
+							{
+								dest->getUnit()->damage(Position(0, 0, 0), (int)(RNG::generate(power_/2.0, power_*1.5)), type);
+							}
+							for (std::vector<BattleItem*>::iterator it = dest->getInventory()->begin(); it != dest->getInventory()->end(); ++it)
+							{
+								if ((*it)->getUnit())
+								{
+									(*it)->getUnit()->damage(Position(0, 0, 0), (int)(RNG::generate(power_/2.0, power_*1.5)), type);
+								}
+							}
+						}
+						if (type == DT_HE)
 						{
 							// power 50 - 150%
 							if (dest->getUnit())
@@ -2026,8 +2041,7 @@ Tile *TileEngine::applyItemGravity(Tile *t)
 				{
 					rt = _save->getTile(Position(unitpos.x+x, unitpos.y+y, unitpos.z));
 					rtb = _save->getTile(Position(unitpos.x+x, unitpos.y+y, unitpos.z-1)); //below
-					if (rt->getMapData(MapData::O_FLOOR)
-						|| (rtb && rtb->getTerrainLevel() == -24) )
+					if (!rt->hasNoFloor(rtb))
 					{
 						canFall = false;
 					}
@@ -2037,15 +2051,17 @@ Tile *TileEngine::applyItemGravity(Tile *t)
 				break;
 			unitpos.z--;
 		}
-		rt = _save->getTile(unitpos); //destination tile
- 
-		if (t != rt)
+		if (unitpos != occupant->getPosition() && !occupant->isOut())
 		{
-			Tile *tileBelowrt = _save->getTile(rt->getPosition() - Position(0,0,1));
-			Tile *tileBelowt = _save->getTile(t->getPosition() - Position(0,0,1));
-			occupant->startWalking(Pathfinding::DIR_DOWN, rt->getPosition(), rt, tileBelowt, tileBelowrt, occupant->getVisible());
+			occupant->startWalking(Pathfinding::DIR_DOWN, occupant->getPosition() + Position(0,0,-1),
+				_save->getTile(occupant->getPosition() + Position(0,0,-1)),
+				_save->getTile(occupant->getPosition() + Position(0,0,-1)),
+				_save->getTile(occupant->getPosition() + Position(0,0,-2)), true);
 			_save->addFallingUnit(occupant);
-			_save->setUnitsFalling(true);
+		}
+		else if (unitpos != occupant->getPosition())
+		{
+			_save->setUnitPosition(occupant, unitpos);
 		}
 	}
 	
