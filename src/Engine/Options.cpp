@@ -139,6 +139,7 @@ void createDefault()
 	setBool("useScaleFilter", false);
 	setBool("useHQXFilter", false);
 	setBool("useOpenGL", false);
+	setBool("checkOpenGLErrors", false);
 	setString("useOpenGLShader", "Shaders/CRT-interlaced.OpenGL.shader");
 	setBool("vSyncForOpenGL", false);
 	setBool("useOpenGLSmoothing", true);
