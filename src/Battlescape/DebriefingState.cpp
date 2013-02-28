@@ -538,7 +538,6 @@ void DebriefingState::prepareDebriefing()
 				{
 					if (base->getAvailableContainment() - (base->getUsedContainment() * _game->getAlienContainmentHasUpperLimit()) > 0)
 					{
-<<<<<<< HEAD
 						if (status == STATUS_UNCONSCIOUS)
 						{
 							base->getItems()->addItem(type, 1);
