@@ -288,7 +288,11 @@ bool showHelp(int argc, char** args)
  */
 bool init(int argc, char** args)
 {
-#ifdef _OPTIONS_google_sparsehash
+#ifdef _USE_google_sparsehash
+	// google's sparsehash requires these strange calls for any new hashtable
+	// you must give it a key that will never appear as an actual key
+	// sparsehash then presumably uses it to mark empty entries
+	// why is there no default? it is a mystery.
 	_options.set_empty_key("\n\t: ```this is not a valid option, clearly```");
 	_optionsCache.set_empty_key("\n\t: ```this is not a valid option, clearly```");
 #endif
