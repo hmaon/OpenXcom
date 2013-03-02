@@ -633,7 +633,7 @@ void AggroBAIState::think(BattleAction *action)
                         {
                             action->target.z = 0;
                         }
-                        else if (action->target.z >= _game->getHeight()) 
+                        else if (action->target.z >= _game->getMapSizeZ()) 
                         {
                             action->target.z = _unit->getPosition().z;
                         }
