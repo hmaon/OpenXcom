@@ -682,7 +682,7 @@ void AggroBAIState::takeCoverAction(BattleAction *action)
 		tile = _game->getTile(action->target);
 		if (!tile) 
 		{
-			score = -100000; // no you can't quit the battlefield by running off the map. 
+			score = -100001; // no you can't quit the battlefield by running off the map. 
 		}
 		else
 		{
