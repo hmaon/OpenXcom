@@ -212,7 +212,7 @@ bool Pathfinding::aStarPath(const Position &startPosition, const Position &endPo
 				continue;
 			_totalTUCost = currentNode->getTUCost(missile) + tuCost;
 			// If this node is unvisited or has only been visited from inferior paths...
-			if ((!nextNode->inOpenSet() || nextNode->getTUCost(missile) > _totalTUCost) && _totalTUCost < maxTUCost)
+			if ((!nextNode->inOpenSet() || nextNode->getTUCost(missile) > _totalTUCost) && _totalTUCost <= maxTUCost)
 			{
 				nextNode->connect(_totalTUCost, currentNode, direction, endPosition);
 				openList.push(nextNode);
