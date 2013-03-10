@@ -43,6 +43,7 @@ protected:
 	static std::vector<Position> _randomTileSearch;
 	static int _randomTileSearchAge;
 	bool _charge, _traceAI;
+	Position _lastCover;
 	
 public:
 	/// Creates a new AggroBAIState linked to the game and a certain unit.
