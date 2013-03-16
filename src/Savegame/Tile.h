@@ -24,7 +24,6 @@
 #include "../Battlescape/Position.h"
 #include "../Ruleset/MapData.h"
 #include "BattleUnit.h"
-#include "SerializationHelper.h"
 
 #include <SDL_types.h> // for Uint8
 
@@ -46,14 +45,23 @@ class Tile
 public:
 	static struct SerializationKey 
 	{
-		// how many bytes to store each variable or each member of array of the same name
+		// how many bytes to store for each variable or each member of array of the same name
 		Uint8 index; // for indexing the actual tile array
 		Uint8 _mapDataSetID;
 		Uint8 _mapDataID;
 		Uint8 _smoke;
 		Uint8 _fire;
+        Uint8 boolFields;
 		Uint32 totalBytes; // per structure, including any data not mentioned here and accounting for all array members!
 	} serializationKey;
+
+    // scratch variables for AI, regarding how many soldiers are visible from a square and how close is the closest one:
+	int closestSoldierDSqr;
+	Position closestSoldierPos;
+	int meanSoldierDSqr;
+	int soldiersVisible;
+	int closestAlienDSqr;
+
 protected:
 	static const int LIGHTLAYERS = 3;
 	MapData *_objects[4];
@@ -79,7 +87,7 @@ public:
 	/// Load the tile from yaml
 	void load(const YAML::Node &node);
 	/// Load the tile from binary buffer in memory
-	void loadBinary(Uint8 **buffer, Tile::SerializationKey& serializationKey);
+	void loadBinary(Uint8 *buffer, Tile::SerializationKey& serializationKey);
 	/// Saves the tile to yaml
 	void save(YAML::Emitter &out) const;
 	/// Saves the tile to binary
@@ -95,7 +103,7 @@ public:
 	/// Get the TU cost to walk over a certain part of the tile.
 	int getTUCost(int part, MovementType movementType) const;
 	/// Checks if this tile has a floor.
-	bool hasNoFloor() const;
+	bool hasNoFloor(Tile *tileBelow) const;
 	/// Checks if this tile is a big wall.
 	bool isBigWall() const;
 	/// Get terrain level.
@@ -103,7 +111,7 @@ public:
 	/// Gets the tile's position.
 	const Position& getPosition() const;
 	/// Gets the floor object footstep sound.
-	int getFootstepSound() const;
+	int getFootstepSound(Tile *tileBelow) const;
 	/// Open a door, returns the ID, 0(normal), 1(ufo) or -1 if no door opened.
 	int openDoor(int part, BattleUnit *Unit = 0, bool debug = false);
 	/// Check if ufo door is open.
@@ -135,7 +143,7 @@ public:
 	/// Get object sprites.
 	Surface *getSprite(int part) const;
 	/// Set a unit on this tile.
-	void setUnit(BattleUnit *unit);
+	void setUnit(BattleUnit *unit, Tile *tileBelow = 0);
 	/// Get the (alive) unit on this tile.
 	BattleUnit *getUnit() const;
 	/// Set fire.

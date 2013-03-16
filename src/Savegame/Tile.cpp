@@ -27,6 +27,7 @@
 #include "BattleItem.h"
 #include "../Ruleset/RuleItem.h"
 #include "../Ruleset/Armor.h"
+#include "SerializationHelper.h"
 
 namespace OpenXcom
 {
@@ -38,8 +39,8 @@ Tile::SerializationKey Tile::serializationKey =
  2, // _mapDataID, four of these
  1, // _fire
  1, // _smoke
-	// one 8-bit bool field goes unmentioned
- 4 + 2*4 + 2*4 +1 +1 +1 // total bytes to save one tile
+ 1,	// one 8-bit bool field
+ 4 + 2*4 + 2*4 + 1 + 1 + 1 // total bytes to save one tile
 };
 
 /**
@@ -108,30 +109,40 @@ void Tile::load(const YAML::Node &node)
 		(*pName)[1] >> _discovered[1];
 		(*pName)[2] >> _discovered[2];
 	}
+	if (const YAML::Node *pName = node.FindValue("openDoorWest"))
+	{
+		_currentFrame[1] = 7;
+	}
+	if (const YAML::Node *pName = node.FindValue("openDoorNorth"))
+	{
+		_currentFrame[2] = 7;
+	}
 }
 
 /**
  * Load the tile from binary.
  * @param buffer pointer to buffer.
  */
-void Tile::loadBinary(Uint8 **buffer, Tile::SerializationKey& serKey)
+void Tile::loadBinary(Uint8 *buffer, Tile::SerializationKey& serKey)
 {
-	_mapDataID[0] = unserializeInt(buffer, serKey._mapDataID);
-	_mapDataID[1] = unserializeInt(buffer, serKey._mapDataID);
-	_mapDataID[2] = unserializeInt(buffer, serKey._mapDataID);
-	_mapDataID[3] = unserializeInt(buffer, serKey._mapDataID);
-	_mapDataSetID[0] = unserializeInt(buffer, serKey._mapDataSetID);
-	_mapDataSetID[1] = unserializeInt(buffer, serKey._mapDataSetID);
-	_mapDataSetID[2] = unserializeInt(buffer, serKey._mapDataSetID);
-	_mapDataSetID[3] = unserializeInt(buffer, serKey._mapDataSetID);
+	_mapDataID[0] = unserializeInt(&buffer, serKey._mapDataID);
+	_mapDataID[1] = unserializeInt(&buffer, serKey._mapDataID);
+	_mapDataID[2] = unserializeInt(&buffer, serKey._mapDataID);
+	_mapDataID[3] = unserializeInt(&buffer, serKey._mapDataID);
+	_mapDataSetID[0] = unserializeInt(&buffer, serKey._mapDataSetID);
+	_mapDataSetID[1] = unserializeInt(&buffer, serKey._mapDataSetID);
+	_mapDataSetID[2] = unserializeInt(&buffer, serKey._mapDataSetID);
+	_mapDataSetID[3] = unserializeInt(&buffer, serKey._mapDataSetID);
 
-	_smoke = unserializeInt(buffer, serKey._smoke);
-	_fire = unserializeInt(buffer, serKey._fire);
+	_smoke = unserializeInt(&buffer, serKey._smoke);
+	_fire = unserializeInt(&buffer, serKey._fire);
 
-	_discovered[0] = (**buffer & 1) ? true : false;
-	_discovered[1] = (**buffer & 2) ? true : false;
-	_discovered[2] = (**buffer & 4) ? true : false;
-	++(*buffer);
+    Uint8 boolFields = unserializeInt(&buffer, serKey.boolFields);
+	_discovered[0] = (boolFields & 1) ? true : false;
+	_discovered[1] = (boolFields & 2) ? true : false;
+	_discovered[2] = (boolFields & 4) ? true : false;
+	_currentFrame[1] = (boolFields & 8) ? 7 : 0;
+	_currentFrame[2] = (boolFields & 0x10) ? 7 : 0;
 }
 
 
@@ -156,6 +167,14 @@ void Tile::save(YAML::Emitter &out) const
 		out << YAML::Key << "discovered" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq << _discovered[0] << _discovered[1] << _discovered[2] << YAML::EndSeq;
 	}
+	if (isUfoDoorOpen(1))
+	{
+		out << YAML::Key << "openDoorWest" <<  YAML::Value << true;
+	}
+	if (isUfoDoorOpen(2))
+	{
+		out << YAML::Key << "openDoorNorth" <<  YAML::Value << true;
+	}
 	out << YAML::EndMap;
 }
 /**
@@ -176,8 +195,10 @@ void Tile::saveBinary(Uint8** buffer) const
 	serializeInt(buffer, serializationKey._smoke, _smoke);
 	serializeInt(buffer, serializationKey._fire, _fire);
 
-	**buffer = (_discovered[0]?1:0) + (_discovered[1]?2:0) + (_discovered[2]?4:0);
-	++(*buffer);
+	Uint8 boolFields = (_discovered[0]?1:0) + (_discovered[1]?2:0) + (_discovered[2]?4:0);
+	boolFields |= isUfoDoorOpen(1) ? 8 : 0; // west
+	boolFields |= isUfoDoorOpen(2) ? 0x10 : 0; // north?
+	serializeInt(buffer, serializationKey.boolFields, boolFields);
 }
 
 /**
@@ -224,7 +245,7 @@ void Tile::getMapData(int *mapDataID, int *mapDataSetID, int part) const
  */
 bool Tile::isVoid() const
 {
-	return _objects[0] == 0 && _objects[1] == 0 && _objects[2] == 0 && _objects[3] == 0 && _smoke == 0;
+	return _objects[0] == 0 && _objects[1] == 0 && _objects[2] == 0 && _objects[3] == 0 && _smoke == 0 && _inventory.size() == 0;
 }
 
 /**
@@ -249,8 +270,10 @@ int Tile::getTUCost(int part, MovementType movementType) const
  * Whether this tile has a floor or not. If no object defined as floor, it has no floor.
  * @return bool
  */
-bool Tile::hasNoFloor() const
+bool Tile::hasNoFloor(Tile *tileBelow) const
 {
+	if (tileBelow != 0 && tileBelow->getTerrainLevel() == -24)
+		return false;
 	if (_objects[MapData::O_FLOOR])
 		return _objects[MapData::O_FLOOR]->isNoFloor();
 	else
@@ -299,7 +322,7 @@ const Position& Tile::getPosition() const
  * Gets the tile's footstep sound.
  * @return sound ID
  */
-int Tile::getFootstepSound() const
+int Tile::getFootstepSound(Tile *tileBelow) const
 {
 	int sound = 0;
 
@@ -307,6 +330,8 @@ int Tile::getFootstepSound() const
 		sound = _objects[MapData::O_FLOOR]->getFootstepSound();
 	if (_objects[MapData::O_OBJECT])
 		sound = _objects[MapData::O_OBJECT]->getFootstepSound();
+	if (!_objects[MapData::O_FLOOR] && !_objects[MapData::O_OBJECT] && tileBelow != 0 && tileBelow->getTerrainLevel() == -24)
+		sound = tileBelow->getMapData(MapData::O_OBJECT)->getFootstepSound();
 
 	return sound;
 }
@@ -460,6 +485,8 @@ bool Tile::destroy(int part)
 	bool _objective = false;
 	if (_objects[part])
 	{
+		if (_objects[part]->isGravLift())
+			return false;
 		_objective = _objects[part]->getSpecialType() == MUST_DESTROY;
 		MapData *originalPart = _objects[part];
 		int originalMapDataSetID = _mapDataSetID[part];
@@ -649,11 +676,11 @@ Surface *Tile::getSprite(int part) const
  * Set a unit on this tile.
  * @param unit
  */
-void Tile::setUnit(BattleUnit *unit)
+void Tile::setUnit(BattleUnit *unit, Tile *tileBelow)
 {
 	if (unit != 0)
 	{
-		unit->setTile(this);
+		unit->setTile(this, tileBelow);
 	}
 	_unit = unit;
 }

@@ -1528,7 +1528,7 @@ craftWeapons:
 #    floorSprite: Sprite reference in FloorOb.pck. -1 for none. (int) (default -1) (http://www.ufopaedia.org/index.php?title=FLOOROB.PCK)
 #    handSprite: Sprite reference in HandOb.pck. -1 for none. (int) (default -1) (http://www.ufopaedia.org/index.php?title=HANDOB.PCK)
 #    bulletSprite: Projectile sprite. (int) 0 = rocket, 1 = pistol bullet, 2 = rifle bullet, 3 = auto cannon bullet, 
-#    4 = heavy cannon bullet, 5 = small laser, 6 = large laser, 7 = nothing?, 8 = plasma, 9 = small launcher, 10 = blaster launcher
+#    4 = heavy cannon bullet, 5 = small laser, 6 = laser rifle, 7 = heavy laser, 8 = plasma, 9 = small launcher, 10 = blaster launcher
 #    fireSound: Sound effect Reference in Sample2.cat. -1 for none (int) (default -1) (http://www.ufopaedia.org/index.php?title=SOUND#SAMPLE2.CAT)
 #    hitSound: Sound effect Reference in Sample2.cat. -1 for none (int) (default -1) (http://www.ufopaedia.org/index.php?title=SOUND#SAMPLE2.CAT)
 #    compatibleAmmo:
@@ -1546,7 +1546,7 @@ craftWeapons:
 #    tuUse: TU usage for "special" actions, ie: psi-amp. flat TU cost. (int)
 #    battleType: What kind of item is this? (int) (default 0)
 #        0 = NONE, 1 = FIREARM, 2 = AMMO, 3 = MELEE, 4 = GRENADE, 5 = PROXIMITYGRENADE, 6 = MEDIKIT,
-#        6 = MEDIKIT, 7 = SCANNER, 8 = MINDPROBE, 9 = PSIAMP, 10 = FLARE, 11 = CORPSE 
+#        7 = SCANNER, 8 = MINDPROBE, 9 = PSIAMP, 10 = FLARE, 11 = CORPSE
 #    twoHanded: Is this a two-handed weapon. (boolean) (default false)
 #    invWidth: Width of this item in the inventory screen. (int) (default 1)
 #    invHeight: Height of this item in the inventory screen. (int) (default 1)
@@ -2127,7 +2127,7 @@ items:
     bigSprite: 6
     floorSprite: 6
     handSprite: 16
-    bulletSprite: 6
+    bulletSprite: 7
     fireSound: 11
     hitSound: 19
     hitAnimation: 36
@@ -2623,80 +2623,103 @@ items:
   - type: STR_REAPER_CORPSE
     size: 1
     costSell: 20000
-    recoveryPoints: 3
     battleType: 11
-    armor: 20
   - type: REAPER_CORPSE_1
+    name: STR_REAPER_CORPSE
     floorSprite: 52
     invWidth: 0
     invHeight: 0
-    recover: false
+    battleType: 11
+    recoveryPoints: 3
+    armor: 20
   - type: REAPER_CORPSE_2
     floorSprite: 55
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: REAPER_CORPSE_3
     floorSprite: 54
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: REAPER_CORPSE_4
     floorSprite: 53
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: STR_SECTOPOD_CORPSE
     size: 1
     costSell: 20000
-    recoveryPoints: 3
     battleType: 11
-    armor: 20
   - type: SECTOPOD_CORPSE_1
+    name: STR_SECTOPOD_CORPSE
     floorSprite: 60
     invWidth: 0
     invHeight: 0
-    recover: false
+    battleType: 11
+    recoveryPoints: 3
+    armor: 20
   - type: SECTOPOD_CORPSE_2
     floorSprite: 61
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: SECTOPOD_CORPSE_3
     floorSprite: 62
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: SECTOPOD_CORPSE_4
     floorSprite: 63
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: STR_CYBERDISC_CORPSE
     size: 1
     costSell: 20000
-    recoveryPoints: 3
     battleType: 11
-    armor: 20
   - type: CYBERDISC_CORPSE_1
+    name: STR_CYBERDISC_CORPSE
     floorSprite: 56
     invWidth: 0
     invHeight: 0
-    recover: false
+    battleType: 11
+    recoveryPoints: 3
+    armor: 20
   - type: CYBERDISC_CORPSE_2
     floorSprite: 57
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: CYBERDISC_CORPSE_3
+    name: STR_CYBERDISC_CORPSE
     floorSprite: 58
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: CYBERDISC_CORPSE_4
+    name: STR_CYBERDISC_CORPSE
     floorSprite: 59
     invWidth: 0
     invHeight: 0
+    battleType: 11
+    armor: 20
     recover: false
   - type: HOVERTANK_CORPSE_1
     floorSprite: 64
@@ -2869,6 +2892,7 @@ items:
     invHeight: 3
     clipSize: -1
     recover: false
+    arcingShot: true
   - type: SILACOID_WEAPON
     weight: 3
     bigSprite: 40
@@ -2879,6 +2903,7 @@ items:
     damageType: 2
     accuracyMelee: 92
     tuMelee: 15
+    clipSize: -1
     battleType: 3
     fixedWeapon: true
     invWidth: 2
@@ -2927,118 +2952,147 @@ items:
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_SECTOID_ENGINEER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SECTOID_MEDIC
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SECTOID_NAVIGATOR
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SECTOID_LEADER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SECTOID_COMMANDER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_CYBERDISC_TERRORIST
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 80000
   - type: STR_FLOATER_SOLDIER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_FLOATER_ENGINEER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_FLOATER_MEDIC
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_FLOATER_NAVIGATOR
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_FLOATER_LEADER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_FLOATER_COMMANDER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_REAPER_TERRORIST
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_SNAKEMAN_SOLDIER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_SNAKEMAN_ENGINEER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SNAKEMAN_NAVIGATOR
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SNAKEMAN_LEADER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_SNAKEMAN_COMMANDER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_CHRYSSALID_TERRORIST
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_MUTON_SOLDIER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_MUTON_NAVIGATOR
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_MUTON_ENGINEER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_ETHEREAL_SOLDIER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_ETHEREAL_LEADER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 60000
   - type: STR_ETHEREAL_COMMANDER
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 80000
   - type: STR_SILACOID_TERRORIST
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_CELATID_TERRORIST
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 40000
   - type: STR_SECTOPOD_TERRORIST
     size: 0.0
     recover: true
     liveAlien: true
+    costSell: 80000
 # Special Psi Weapon for Aliens.
 # Usage of this is hard-coded.
 # DO NOT DELETE!
@@ -3380,79 +3434,105 @@ terrains:
         width: 10
         length: 10
         type: 1
+        subType: 0
+        maxCount: 3
       - name: CULTA01
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA02
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA03
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA04
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA05
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA06
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA07
         width: 10
         length: 10
         type: 1
+        subType: 0
+        maxCount: 3
       - name: CULTA08
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA09
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA10
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA11
         width: 10
         length: 10
         type: 1
+        subType: 0
+        maxCount: 3
       - name: CULTA12
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA13
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA14
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA15
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA16
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA17
         width: 10
         length: 10
+        maxCount: 3
       - name: CULTA18
         width: 10
         length: 10
+        maxCount: 3
   - name: DESERT
     mapDataSets:
       - BLANKS
       - DESERT
+    largeBlockLimit: 3
     mapBlocks:
       - name: DESERT00
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: DESERT01
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: DESERT02
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: DESERT03
         width: 10
         length: 10
@@ -3484,6 +3564,7 @@ terrains:
     mapDataSets:
       - BLANKS
       - FOREST
+    largeBlockLimit: 2
     mapBlocks:
       - name: FOREST00
         width: 10
@@ -3543,30 +3624,39 @@ terrains:
       - name: JUNGLE03
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE04
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE05
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE06
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE07
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE08
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE09
         width: 10
         length: 10
+        frequency: 2
       - name: JUNGLE10
         width: 10
         length: 10
+        frequency: 1
       - name: JUNGLE11
         width: 10
         length: 10
+        frequency: 1
   - name: MARS
     mapDataSets:
       - BLANKS
@@ -3577,6 +3667,7 @@ terrains:
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: MARS01
         width: 10
         length: 10
@@ -3612,6 +3703,7 @@ terrains:
     mapDataSets:
       - BLANKS
       - MOUNT
+    largeBlockLimit: 2
     mapBlocks:
       - name: MOUNT00
         width: 10
@@ -3659,19 +3751,23 @@ terrains:
     mapDataSets:
       - BLANKS
       - POLAR
+    largeBlockLimit: 1
     mapBlocks:
       - name: POLAR00
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: POLAR01
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: POLAR02
         width: 10
         length: 10
         type: 1
+        subType: 0
       - name: POLAR03
         width: 10
         length: 10
@@ -3712,6 +3808,7 @@ terrains:
       - U_WALL02
       - U_PODS
       - BRAIN
+    largeBlockLimit: 3
     mapBlocks:
       - name: UBASE_00
         width: 20
@@ -3739,6 +3836,7 @@ terrains:
       - name: UBASE_07
         width: 10
         length: 10
+        type: 4
       - name: UBASE_08
         width: 10
         length: 10
@@ -3771,6 +3869,7 @@ terrains:
       - URBITS
       - URBAN
       - FRNITURE
+    largeBlockLimit: 5
     mapBlocks:
       - name: URBAN00
         width: 10
@@ -3788,10 +3887,14 @@ terrains:
         width: 10
         length: 10
         type: 1
+        subType: 0
+        frequency: 3
       - name: URBAN04
         width: 10
         length: 10
         type: 1
+        subType: 0
+        frequency: 3
       - name: URBAN05
         width: 20
         length: 20
@@ -3810,18 +3913,23 @@ terrains:
       - name: URBAN14
         width: 10
         length: 10
+        frequency: 2
       - name: URBAN15
         width: 10
         length: 10
+        frequency: 2
       - name: URBAN16
         width: 10
         length: 10
+        frequency: 2
       - name: URBAN17
         width: 10
         length: 10
+        frequency: 2
       - name: URBAN18
         width: 10
         length: 10
+        frequency: 2
   - name: XBASE
     mapDataSets:
       - BLANKS
@@ -4628,7 +4736,7 @@ units:
     standHeight: 15
     kneelHeight: 15
     floatHeight: 2
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 20
     deathSound: 23
     moveSound: 40
@@ -4802,7 +4910,7 @@ units:
     armor: REAPER_ARMOR
     standHeight: 23
     kneelHeight: 16
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 25
     deathSound: 48
     intelligence: 2
@@ -4824,7 +4932,7 @@ units:
     armor: TANK_ARMOR
     standHeight: 16
     kneelHeight: 16
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 20
     deathSound: 23
     moveSound: 14	
@@ -4845,7 +4953,7 @@ units:
     armor: TANK_ARMOR
     standHeight: 16
     kneelHeight: 16
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 20
     deathSound: 23
     moveSound: 14
@@ -4866,7 +4974,7 @@ units:
     armor: TANK_ARMOR
     standHeight: 16
     kneelHeight: 16
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 20
     deathSound: 23
     moveSound: 14
@@ -4888,7 +4996,7 @@ units:
     standHeight: 12
     kneelHeight: 12
     floatHeight: 6
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 20
     deathSound: 23
     moveSound: 15
@@ -4910,7 +5018,7 @@ units:
     standHeight: 12
     kneelHeight: 12
     floatHeight: 6
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 20
     deathSound: 23
     moveSound: 15
@@ -5308,7 +5416,7 @@ units:
     armor: SECTOPOD_ARMOR
     standHeight: 23
     kneelHeight: 16
-    loftempsSet: [ 104, 107, 101, 98 ]
+    loftempsSet: [ 92, 89, 90, 91 ]
     value: 30
     deathSound: 23
     intelligence: 4
@@ -6230,6 +6338,8 @@ alienDeployments:
     length: 50
     height: 4
     civilians: 16
+    # roadTypeOdds: [EWRoad, NWRoad] (Crossroad is remainder)
+    roadTypeOdds: [50, 25]
   - type: STR_ALIEN_BASE_ASSAULT
     data:
       - alienRank: 5
@@ -6377,7 +6487,7 @@ alienDeployments:
             []
     width: 50
     length: 50
-    height: 4
+    height: 2
   - type: STR_BASE_DEFENSE
     data:
       - alienRank: 5

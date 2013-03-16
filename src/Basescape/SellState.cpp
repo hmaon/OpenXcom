@@ -51,8 +51,9 @@ namespace OpenXcom
  */
 SellState::SellState(Game *game, Base *base) : State(game), _base(base), _qtys(), _soldiers(), _crafts(), _items(), _sel(0), _total(0), _sOffset(0), _eOffset(0)
 {
-	bool allowChangeListValuesByMouseWheel=Options::getBool("allowChangeListValuesByMouseWheel");
 	_changeValueByMouseWheel = Options::getInt("changeValueByMouseWheel");
+	bool allowChangeListValuesByMouseWheel = (Options::getBool("allowChangeListValuesByMouseWheel") && _changeValueByMouseWheel);
+	bool canSellLiveAliens=Options::getBool("canSellLiveAliens");
 
 	// Create objects
 	_window = new Window(this, 320, 200, 0, 0);
@@ -174,7 +175,7 @@ SellState::SellState(Game *game, Base *base) : State(game), _base(base), _qtys()
 	for (std::vector<std::string>::const_iterator i = items.begin(); i != items.end(); ++i)
 	{
 		int qty = _base->getItems()->getItem(*i);
-		if (qty > 0 && !_game->getRuleset()->getItem(*i)->getAlien())
+		if (qty > 0 && (canSellLiveAliens || !_game->getRuleset()->getItem(*i)->getAlien()))
 		{
 			_qtys.push_back(0);
 			_items.push_back(*i);
@@ -185,9 +186,9 @@ SellState::SellState(Game *game, Base *base) : State(game), _base(base), _qtys()
 		}
 	}
 
-	_timerInc = new Timer(50);
+	_timerInc = new Timer(250);
 	_timerInc->onTimer((StateHandler)&SellState::increase);
-	_timerDec = new Timer(50);
+	_timerDec = new Timer(250);
 	_timerDec->onTimer((StateHandler)&SellState::decrease);
 }
 
@@ -321,7 +322,11 @@ void SellState::lstItemsLeftArrowPress(Action *action)
  */
 void SellState::lstItemsLeftArrowRelease(Action *action)
 {
-	if (action->getDetails()->button.button == SDL_BUTTON_LEFT) _timerInc->stop();
+	if (action->getDetails()->button.button == SDL_BUTTON_LEFT)
+	{
+		_timerInc->setInterval(250);
+		_timerInc->stop();
+	}
 }
 
 /**
@@ -331,6 +336,7 @@ void SellState::lstItemsLeftArrowRelease(Action *action)
 void SellState::lstItemsLeftArrowClick(Action *action)
 {
 	if (action->getDetails()->button.button == SDL_BUTTON_RIGHT) increase(INT_MAX);
+	if (action->getDetails()->button.button == SDL_BUTTON_LEFT) increase(1);
 }
 
 /**
@@ -349,7 +355,11 @@ void SellState::lstItemsRightArrowPress(Action *action)
  */
 void SellState::lstItemsRightArrowRelease(Action *action)
 {
-	if (action->getDetails()->button.button == SDL_BUTTON_LEFT) _timerDec->stop();
+	if (action->getDetails()->button.button == SDL_BUTTON_LEFT)
+	{
+		_timerDec->setInterval(250);
+		_timerDec->stop();
+	}
 }
 
 /**
@@ -359,6 +369,7 @@ void SellState::lstItemsRightArrowRelease(Action *action)
 void SellState::lstItemsRightArrowClick(Action *action)
 {
 	if (action->getDetails()->button.button == SDL_BUTTON_RIGHT) decrease(INT_MAX);
+	if (action->getDetails()->button.button == SDL_BUTTON_LEFT) decrease(1);
 }
 
 /**
@@ -425,6 +436,7 @@ int SellState::getQuantity()
  */
 void SellState::increase()
 {
+	_timerInc->setInterval(50);
 	increase(1);
 }
 
@@ -446,6 +458,7 @@ void SellState::increase(int change)
  */
 void SellState::decrease()
 {
+	_timerDec->setInterval(50);
 	decrease(1);
 }
 

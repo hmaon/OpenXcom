@@ -618,7 +618,7 @@ void GeoscapeState::time5Seconds()
 							int soldiersOnBase = 0;
 							for (std::vector<Soldier*>::iterator j = base->getSoldiers()->begin(); j != base->getSoldiers()->end() ; ++j)
 							{
-								if ((*j)->getCraft() == 0 || (*j)->getCraft()->getStatus() != "STR_OUT") soldiersOnBase++;
+								if (((*j)->getCraft() == 0 || (*j)->getCraft()->getStatus() != "STR_OUT") && (*j)->getWoundRecovery() == 0) soldiersOnBase++;
 							}
 							if (soldiersOnBase > 0)
 							{
@@ -690,6 +690,10 @@ void GeoscapeState::time5Seconds()
 					w->setLatitude(u->getLatitude());
 					w->setId(u->getId());
 					popup(new GeoscapeCraftState(_game, (*j), _globe, w));
+				}
+				if (u != 0 && u->getStatus() == Ufo::DESTROYED)
+				{
+					(*j)->returnToBase();
 				}
 			}
 			if(!_zoomInEffectTimer->isRunning() && !_zoomOutEffectTimer->isRunning())
@@ -860,8 +864,12 @@ private:
  */
 bool DetectXCOMBase::operator()(const Ufo *ufo) const
 {
-	// UFOs building a base don't detect!
-	if (ufo->getTrajectory().getID() == "P5")
+	// only UFOs on retaliation missions actively scan for bases
+	if (ufo->getMissionType() != "STR_ALIEN_RETALIATION" && !Options::getBool("aggressiveRetaliation"))
+		return false;
+
+	// UFOs attacking a base don't detect!
+	if (ufo->getTrajectory().getID() == "__RETALIATION_ASSAULT_RUN")
 	{
 		return false;
 	}
@@ -1402,7 +1410,8 @@ void GeoscapeState::time1Day()
 				}
 			}
 			const RuleResearch * newResearch = research;
-			if(_game->getSavedGame()->isResearched(research->getName()))
+			std::string name = research->getLookup() == "" ? research->getName() : research->getLookup();
+			if(_game->getSavedGame()->isResearched(name))
 			{
 				newResearch = 0;
 			}
@@ -1421,6 +1430,18 @@ void GeoscapeState::time1Day()
 			if (!newPossibleManufacture.empty())
 			{
 				popup(new NewPossibleManufactureState(_game, *i, newPossibleManufacture));
+			}
+			// now iterate through all the bases and remove this project from their labs
+			for (std::vector<Base*>::iterator j = _game->getSavedGame()->getBases()->begin(); j != _game->getSavedGame()->getBases()->end(); ++j)
+			{
+				for (std::vector<ResearchProject*>::const_iterator iter2 = (*j)->getResearch().begin (); iter2 != (*j)->getResearch().end (); ++iter2)
+				{
+					if ((*iter)->getRules()->getName() == (*iter2)->getRules()->getName() && 
+						std::find((*iter2)->getRules()->getUnlocked().begin(), (*iter2)->getRules()->getUnlocked().end(), "STR_ALIEN_ORIGINS") != (*iter2)->getRules()->getUnlocked().end())
+					{
+						(*j)->removeResearch(*iter2);
+					}
+				}
 			}
 			delete(*iter);
 		}
@@ -1964,18 +1985,17 @@ void GeoscapeState::determineAlienMissions(bool atGameStart)
 	else
 	{
 		//
-		// Alien Research at base's region.
+		// Sectoid Research at base's region.
 		//
 		AlienStrategy &strategy = _game->getSavedGame()->getAlienStrategy();
 		std::string targetRegion =
 		_game->getSavedGame()->locateRegion(*_game->getSavedGame()->getBases()->front())->getRules()->getType();
 		// Choose race for this mission.
 		const RuleAlienMission &missionRules = *_game->getRuleset()->getAlienMission("STR_ALIEN_RESEARCH");
-		const std::string &missionRace = missionRules.generateRace(_game->getSavedGame()->getMonthsPassed());
 		AlienMission *otherMission = new AlienMission(missionRules);
 		otherMission->setId(_game->getSavedGame()->getId("ALIEN_MISSIONS"));
 		otherMission->setRegion(targetRegion);
-		otherMission->setRace(missionRace);
+		otherMission->setRace("STR_SECTOID");
 		otherMission->start(150);
 		_game->getSavedGame()->getAlienMissions().push_back(otherMission);
 		// Make sure this combination never comes up again.

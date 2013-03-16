@@ -44,7 +44,6 @@ public:
 	static int BASE_HEIGHT;
 
 private:
-	Surface *_surface;
 	SDL_Surface *_screen;
 	void *_misalignedPixelBuffer;
 	int _bpp;
@@ -56,9 +55,10 @@ private:
 	int _numColors, _firstColor;
 	bool _pushPalette;
 	OpenGL glOutput;
+	Surface *_surface;
 public:
 	/// Creates a new display screen with the specified resolution.
-	Screen(int width, int height, int bpp, bool fullscreen);
+	Screen(int width, int height, int bpp, bool fullscreen, int windowedModePositionX, int windowedModePositionY);
 	/// Cleans up the display screen.
 	~Screen();
 	/// Gets the internal buffer.
@@ -70,7 +70,7 @@ public:
 	/// Clears the screen.
 	void clear();
 	/// Sets the screen's 8bpp palette.
-	void setPalette(SDL_Color *colors, int firstcolor = 0, int ncolors = 256);
+	void setPalette(SDL_Color *colors, int firstcolor = 0, int ncolors = 256, bool immediately = false);
 	/// Gets the screen's 8bpp palette.
 	SDL_Color *getPalette() const;
 	/// Gets the screen's width.

@@ -111,7 +111,7 @@ Game::Game(const std::string &title) : _screen(0), _cursor(0), _lang(0), _states
 	// Create display
 	Screen::BASE_WIDTH = Options::getInt("baseXResolution");
 	Screen::BASE_HEIGHT = Options::getInt("baseYResolution");
-	_screen = new Screen(Options::getInt("displayWidth"), Options::getInt("displayHeight"), 0, Options::getBool("fullscreen"));
+	_screen = new Screen(Options::getInt("displayWidth"), Options::getInt("displayHeight"), 0, Options::getBool("fullscreen"), Options::getInt("windowedModePositionX"), Options::getInt("windowedModePositionY"));
 
 	// Create cursor
 	_cursor = new Cursor(9, 13);
@@ -122,6 +122,8 @@ Game::Game(const std::string &title) : _screen(0), _cursor(0), _lang(0), _states
 
 	// Create blank language
 	_lang = new Language();
+
+	_alienContainmentHasUpperLimit = Options::getBool("alienContainmentHasUpperLimit") ? 1 : 0;
 }
 
 /**
@@ -218,28 +220,27 @@ void Game::run()
 					break;
 				case SDL_KEYDOWN:
 				case SDL_KEYUP:
-					if (Options::getBool("strafe"))
+					if (_event.type == SDL_KEYDOWN)
+					{ 
+						if ((&_event)->key.keysym.sym == SDLK_LCTRL)
+							setCtrlKeyDown(true);
+						else if ((&_event)->key.keysym.sym == SDLK_LSHIFT)
+							setShiftKeyDown(true);
+					}
+					else if (_event.type == SDL_KEYUP)
 					{
-						if (_event.type == SDL_KEYDOWN)
-						{ 
-							if ((&_event)->key.keysym.sym == SDLK_LCTRL)
-								setCtrlKeyDown(true);
-							else if ((&_event)->key.keysym.sym == SDLK_LSHIFT)
-								setShiftKeyDown(true);
-						}
-						else if (_event.type == SDL_KEYUP)
-						{
-							if ((&_event)->key.keysym.sym == SDLK_LCTRL)
-								setCtrlKeyDown(false);
-							else if ((&_event)->key.keysym.sym == SDLK_LSHIFT)
-								setShiftKeyDown(false);
-						}
+						if ((&_event)->key.keysym.sym == SDLK_LCTRL)
+							setCtrlKeyDown(false);
+						else if ((&_event)->key.keysym.sym == SDLK_LSHIFT)
+							setShiftKeyDown(false);
 					}
 				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 					// Skip mouse events if they're disabled
 					if (!_mouseActive) continue;
+					// re-gain focus on mouse-over or keypress.
+					runningState = RUNNING;
 					// Go on, feed the event to others
 				default:
 					Action action = Action(&_event, _screen->getXScale(), _screen->getYScale());
@@ -506,6 +507,15 @@ void Game::setMouseActive(bool active)
 	_cursor->setVisible(active);
 }
 
+/**
+ * Gets the value of alienContainmentHasUpperLimit.
+ * @return An int, if alienContainmentHasUpperLimit is true, then 1, and it's 0 else.
+ */
+int Game::getAlienContainmentHasUpperLimit() const
+{
+	return _alienContainmentHasUpperLimit;
+}
+
 bool Game::_ctrlKeyDown;
 /**
  * Sets whether the control key is down
@@ -539,4 +549,17 @@ bool Game::getShiftKeyDown()
 {
 	return _shiftKeyDown;
 }
+
+
+/**
+ * @brief Returns whether current state is *state
+ * @param state The state to test against the stack state
+ */
+ const bool Game::isState(State *state) const
+{
+	return _states.size() > 0 && _states.back() == state;
+}
+
+
+
 }

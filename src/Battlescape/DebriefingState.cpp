@@ -337,6 +337,7 @@ void DebriefingState::prepareDebriefing()
 
 	int playerInExitArea = 0; // if this stays 0 the craft is lost...
 	int playersSurvived = 0; // if this stays 0 the craft is lost...
+	int playersUnconscious = 0;
 
 	for (std::vector<Base*>::iterator i = save->getBases()->begin(); i != save->getBases()->end(); ++i)
 	{
@@ -367,6 +368,14 @@ void DebriefingState::prepareDebriefing()
 				craft->returnToBase();
 				craft->setLowFuel(true);
 				craft->setInBattlescape(false);
+			}
+			else if ((*j)->getDestination() != 0)
+			{
+				Ufo* u = dynamic_cast<Ufo*>((*j)->getDestination());
+				if (u != 0 && u->isInBattlescape())
+				{
+					(*j)->returnToBase();
+				}
 			}
 		}
 		// in case we DON'T have a craft (base defense)
@@ -489,6 +498,8 @@ void DebriefingState::prepareDebriefing()
 		{ // so this unit is not dead...
 			if (oldFaction == FACTION_PLAYER)
 			{
+				if ((status == STATUS_UNCONSCIOUS || faction == FACTION_HOSTILE) && battle->getMissionType() == "STR_BASE_DEFENSE")
+					playersUnconscious++;
 				playersSurvived++;
 				(*j)->postMissionProcedures(save);
 				if (((*j)->isInExitArea() && battle->getMissionType() != "STR_BASE_DEFENSE") || !aborted)
@@ -524,28 +535,31 @@ void DebriefingState::prepareDebriefing()
 			}
 			else if (oldFaction == FACTION_HOSTILE && (!aborted || (*j)->isInExitArea())
 				// mind controlled units may as well count as unconscious
-				&& ((faction == FACTION_PLAYER)
-				// large units can't be recovered as items, so we have to have an extra special case JUST for reapers
-				|| ((*j)->getStatus() == STATUS_UNCONSCIOUS && (*j)->getArmor()->getSize() > 1)))
+				&& faction == FACTION_PLAYER)
 			{
+				std::string corpseItem = (*j)->getArmor()->getCorpseItem();
+
+				// we need to remove that pesky underscore and add an STR_ for large unit corpses.
+				if ((*j)->getArmor()->getSize() > 1)
+				{
+					corpseItem = "STR_" + corpseItem.substr(0, corpseItem.size()-1);
+				}
+				addStat("STR_LIVE_ALIENS_RECOVERED", 1, (*j)->getValue()*2);
 				if (_game->getSavedGame()->isResearchAvailable(_game->getRuleset()->getResearch(type), _game->getSavedGame()->getDiscoveredResearch(), _game->getRuleset()))
 				{
-					if (base->getAvailableContainment() > 0)
+					if (base->getAvailableContainment() - (base->getUsedContainment() * _game->getAlienContainmentHasUpperLimit()) > 0)
 					{
-						addStat("STR_LIVE_ALIENS_RECOVERED", 1, (*j)->getValue()*2);
 						base->getItems()->addItem(type, 1);
 					}
 					else
 					{
 						_noContainment = true;
-						addStat("STR_ALIEN_CORPSES_RECOVERED", 1, (*j)->getValue());
-						base->getItems()->addItem((*j)->getArmor()->getCorpseItem(), 1);
+						base->getItems()->addItem(corpseItem, 1);
 					}
 				}
 				else
 				{
-					addStat("STR_ALIEN_CORPSES_RECOVERED", 1, (*j)->getValue());
-					base->getItems()->addItem((*j)->getArmor()->getCorpseItem(), 1);
+					base->getItems()->addItem(corpseItem, 1);
 				}
 			}
 			else if (oldFaction == FACTION_NEUTRAL)
@@ -561,6 +575,10 @@ void DebriefingState::prepareDebriefing()
 				}
 			}
 		}
+	}
+	if (playersUnconscious == playersSurvived)
+	{
+		playersSurvived = 0;
 	}
 	if (((playerInExitArea == 0 && aborted) || (playersSurvived == 0)) && craft != 0)
 	{
@@ -612,7 +630,7 @@ void DebriefingState::prepareDebriefing()
 			_txtTitle->setText(_game->getLanguage()->getString("STR_UFO_IS_RECOVERED"));
 		}
 
-		for (int i = 0; i < battle->getHeight() * battle->getLength() * battle->getWidth(); ++i)
+		for (int i = 0; i < battle->getMapSizeXYZ(); ++i)
 		{
 			// get recoverable map data objects from the battlescape map
 			for (int part = 0; part < 4; part++)
@@ -691,7 +709,7 @@ void DebriefingState::prepareDebriefing()
 		if (playersSurvived > 0 && !_destroyBase)
 		{
 			// recover items from the craft floor
-			for (int i = 0; i < battle->getHeight() * battle->getLength() * battle->getWidth(); ++i)
+			for (int i = 0; i < battle->getMapSizeXYZ(); ++i)
 			{
 				if (battle->getTiles()[i]->getMapData(MapData::O_FLOOR) && (battle->getTiles()[i]->getMapData(MapData::O_FLOOR)->getSpecialType() == START_POINT))
 					recoverItems(battle->getTiles()[i]->getInventory(), base);		
@@ -828,29 +846,28 @@ void DebriefingState::recoverItems(std::vector<BattleItem*> *from, Base *base)
 				if ((*it)->getRules()->getBattleType() == BT_CORPSE && (*it)->getUnit()->getStatus() == STATUS_DEAD)
 				{
 					addStat("STR_ALIEN_CORPSES_RECOVERED", 1, (*it)->getRules()->getRecoveryPoints());
-					base->getItems()->addItem((*it)->getRules()->getType(), 1);
+					base->getItems()->addItem((*it)->getRules()->getName(), 1);
 				}
 				else if ((*it)->getRules()->getBattleType() == BT_CORPSE && (*it)->getUnit()->getStatus() == STATUS_UNCONSCIOUS)
 				{
 					if ((*it)->getUnit()->getOriginalFaction() == FACTION_HOSTILE)
 					{
-						if (base->getAvailableContainment() > 0)
+						addStat("STR_LIVE_ALIENS_RECOVERED", 1, (*it)->getUnit()->getValue()*2);
+						if (base->getAvailableContainment() - (base->getUsedContainment() * _game->getAlienContainmentHasUpperLimit()) > 0)
 						{
-							addStat("STR_LIVE_ALIENS_RECOVERED", 1, (*it)->getUnit()->getValue()*2);
 							if (_game->getSavedGame()->isResearchAvailable(_game->getRuleset()->getResearch((*it)->getUnit()->getType()), _game->getSavedGame()->getDiscoveredResearch(), _game->getRuleset()))
 							{
 								base->getItems()->addItem((*it)->getUnit()->getType(), 1);
 							}
 							else
 							{
-								base->getItems()->addItem((*it)->getRules()->getType(), 1);
+								base->getItems()->addItem((*it)->getRules()->getName(), 1);
 							}
 						}
 						else
 						{
-							addStat("STR_ALIEN_CORPSES_RECOVERED", 1, (*it)->getRules()->getRecoveryPoints());
 							_noContainment = true;
-							base->getItems()->addItem((*it)->getRules()->getType(), 1);
+							base->getItems()->addItem((*it)->getRules()->getName(), 1);
 						}
 
 						
@@ -903,6 +920,5 @@ void DebriefingState::recoverItems(std::vector<BattleItem*> *from, Base *base)
 		base->getItems()->addItem(rl->first->getType(), total_clips);
 	}
 }
-
 
 }

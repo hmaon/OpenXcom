@@ -43,9 +43,9 @@ int Screen::BASE_HEIGHT = 200;
 void Screen::makeVideoFlags()
 {
 	_flags = SDL_SWSURFACE|SDL_HWPALETTE;
-	if (Options::getBool("allowResize")) _flags |= SDL_RESIZABLE;
 	if (Options::getBool("asyncBlit")) _flags |= SDL_ASYNCBLIT;
 	if (isOpenGLEnabled()) _flags = SDL_OPENGL;
+	if (Options::getBool("allowResize")) _flags |= SDL_RESIZABLE;
 	if (_fullscreen)
 	{
 		_flags |= SDL_FULLSCREEN;
@@ -64,9 +64,24 @@ void Screen::makeVideoFlags()
  * @warning Currently the game is designed for 8bpp, so there's no telling what'll
  * happen if you use a different value.
  */
-Screen::Screen(int width, int height, int bpp, bool fullscreen) : _bpp(bpp), _scaleX(1.0), _scaleY(1.0), _fullscreen(fullscreen), _numColors(0), _firstColor(0), _surface(0)
+Screen::Screen(int width, int height, int bpp, bool fullscreen, int windowedModePositionX, int windowedModePositionY) : _bpp(bpp), _scaleX(1.0), _scaleY(1.0), _fullscreen(fullscreen), _numColors(0), _firstColor(0), _surface(0)
 {
+	char *prev;
+	if (!_fullscreen)
+	{
+		prev = SDL_getenv("SDL_VIDEO_WINDOW_POS");
+		if (0 == prev) prev = (char*)"";
+		std::stringstream ss;
+		ss << "SDL_VIDEO_WINDOW_POS=" << std::dec << windowedModePositionX << "," << windowedModePositionY;
+		SDL_putenv(const_cast<char*>(ss.str().c_str()));
+	}
 	setResolution(width, height);
+	if (!_fullscreen)
+	{ // We don't want to put the window back to the starting position later when the window is resized.
+		std::stringstream ss;
+		ss << "SDL_VIDEO_WINDOW_POS=" << prev;
+		SDL_putenv(const_cast<char*>(ss.str().c_str()));
+	}
 	memset(deferredPalette, 0, 256*sizeof(SDL_Color));
 }
 
@@ -140,7 +155,7 @@ void Screen::flip()
 	{
 		if (_screen->format->BitsPerPixel == 8 && SDL_SetColors(_screen, &(deferredPalette[_firstColor]), _firstColor, _numColors) == 0)
 		{
-			Log(LOG_ERROR) << "Display palette doesn't match requested palette";
+			Log(LOG_DEBUG) << "Display palette doesn't match requested palette";
 		}
 		_numColors = 0;
 		_pushPalette = false;
@@ -168,7 +183,7 @@ void Screen::clear()
  * @param firstcolor Offset of the first color to replace.
  * @param ncolors Amount of colors to replace.
  */
-void Screen::setPalette(SDL_Color* colors, int firstcolor, int ncolors)
+void Screen::setPalette(SDL_Color* colors, int firstcolor, int ncolors, bool immediately)
 {
 	if (_numColors && (_numColors != ncolors) && (_firstColor != firstcolor))
 	{
@@ -187,10 +202,10 @@ void Screen::setPalette(SDL_Color* colors, int firstcolor, int ncolors)
 	_surface->setPalette(colors, firstcolor, ncolors);
 
 	// defer actual update of screen until SDL_Flip()
-	//if (SDL_SetColors(_screen, colors, firstcolor, ncolors) == 0)
-	//{
-	//	Log(LOG_ERROR) << "Display palette doesn't match requested palette";
-	//}
+	if (immediately && SDL_SetColors(_screen, colors, firstcolor, ncolors) == 0)
+	{
+		Log(LOG_DEBUG) << "Display palette doesn't match requested palette";
+	}
 
 	// Sanity check
 	/*
@@ -253,7 +268,8 @@ void Screen::setResolution(int width, int height)
 		_surface->getSurface()->h != BASE_HEIGHT))) // don't reallocate _surface if not necessary, it's a waste of CPU cycles
 	{
 		if (_surface) delete _surface;
-		_surface = new Surface((int)BASE_WIDTH, (int)BASE_HEIGHT, 0, 0, _bpp);
+		_surface = new Surface((int)BASE_WIDTH, (int)BASE_HEIGHT, 0, 0, Screen::isHQXEnabled() ? 32 : 8); // only HQX needs 32bpp for this surface; the OpenGL class has its own 32bpp buffer
+		if (_surface->getSurface()->format->BitsPerPixel == 8) _surface->setPalette(deferredPalette);
 	}
 	SDL_SetColorKey(_surface->getSurface(), 0, 0); // turn off color key! 
 
@@ -272,6 +288,7 @@ void Screen::setResolution(int width, int height)
 		glOutput.linear = Options::getBool("useOpenGLSmoothing"); // setting from shader file will override this, though
 		glOutput.set_shader(CrossPlatform::getDataFile(Options::getString("useOpenGLShader")).c_str());
 		glOutput.setVSync(Options::getBool("vSyncForOpenGL"));
+		OpenGL::checkErrors = Options::getBool("checkOpenGLErrors");
 	}
 
 	Log(LOG_INFO) << "Display set to " << _screen->w << "x" << _screen->h << "x" << (int)_screen->format->BitsPerPixel << ".";

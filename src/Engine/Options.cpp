@@ -32,7 +32,7 @@
 #include "Exception.h"
 #include "Logger.h"
 #include "CrossPlatform.h"
-#include "HashMap.h"
+#include "unordered_map.h"
 
 
 
@@ -47,7 +47,7 @@ std::vector<std::string> _dataList;
 std::string _userFolder = "";
 std::string _configFolder = "";
 std::vector<std::string> _userList;
-HashMap<std::string, std::string> _options;
+unordered_map<std::string, std::string> _options;
 
 typedef union 
 {
@@ -55,11 +55,12 @@ typedef union
 	bool b;
 } u_option;
 
-HashMap<std::string, u_option> _optionsCache; // don't parse ints and bools every time we need to access them
+unordered_map<std::string, u_option> _optionsCache; // don't parse ints and bools every time we need to access them
 // this optimization may seem like too much but Options::getX() calls end up in AI loops and suddenly performance matters, go figure
 
 
 std::vector<std::string> _rulesets;
+std::vector<std::string> _purchaseexclusions;
 
 /**
  * Creates a default set of options based on the system.
@@ -80,11 +81,16 @@ void createDefault()
 	setBool("asyncBlit", true);
 	setInt("keyboardMode", KEYBOARD_ON);
 #endif
+	setBool("playIntro", true);
+	setInt("maxFrameSkip", 8);
+	setBool("traceAI", false);
+	setBool("sneakyAI", false);
 	setInt("baseXResolution", 320);
 	setInt("baseYResolution", 200);
 	setBool("useScaleFilter", false);
 	setBool("useHQXFilter", false);
 	setBool("useOpenGL", false);
+	setBool("checkOpenGLErrors", false);
 	setString("useOpenGLShader", "Shaders/CRT-interlaced.OpenGL.shader");
 	setBool("vSyncForOpenGL", false);
 	setBool("useOpenGLSmoothing", true);
@@ -111,11 +117,15 @@ void createDefault()
 	setBool("craftLaunchAlways", false);
 	setBool("globeSeasons", false);
 	setBool("globeAllRadarsOnBaseBuild", true);
-	setBool("allowChangeListValuesByMouseWheel", true); // It applies only for lists, not for scientists/engineers screen
+	setBool("allowChangeListValuesByMouseWheel", false); // It applies only for lists, not for scientists/engineers screen
 	setInt("changeValueByMouseWheel", 10);
 	setInt("audioSampleRate", 22050);
 	setInt("audioBitDepth", 16);
 	setInt("pauseMode", 0);
+	setBool("alienContainmentHasUpperLimit", false);
+	setBool("canSellLiveAliens", false);
+	setBool("canTransferCraftsInAirborne", false); // When the craft can reach the destination base with its fuel
+	setBool("canManufactureMoreItemsPerHour", false);
 	setBool("customInitialBase", false);
 	setBool("aggressiveRetaliation", false);
 	setBool("strafe", false);
@@ -125,6 +135,60 @@ void createDefault()
 	setBool("showFundsOnGeoscape", false);
 	setBool("showMoreStatsInInventoryView", false);
 	setBool("allowResize", false);
+	setInt("windowedModePositionX", 3);
+	setInt("windowedModePositionY", 22);
+
+	// new battle mode data
+	setInt("NewBattleMission", 0);
+	setInt("NewBattleTerrain", 0);
+	setInt("NewBattleItemLevel", 0);
+	setInt("NewBattleAlienRace", 0);
+	setInt("NewBattleDifficulty", 0);
+	setInt("NewBattleDarkness", 0);
+	setInt("NewBattleCraft", 0);
+	
+	// new battle loadout data
+	setInt("NewBattle_STR_AC_AP_AMMO", 1);
+	setInt("NewBattle_STR_AC_HE_AMMO", 1);
+	setInt("NewBattle_STR_AC_I_AMMO", 1);
+	setInt("NewBattle_STR_ALIEN_GRENADE", 1);
+	setInt("NewBattle_STR_AUTO_CANNON", 1);
+	setInt("NewBattle_STR_BLASTER_BOMB", 1);
+	setInt("NewBattle_STR_BLASTER_LAUNCHER", 1);
+	setInt("NewBattle_STR_ELECTRO_FLARE", 1);
+	setInt("NewBattle_STR_GRENADE", 1);
+	setInt("NewBattle_STR_HC_AP_AMMO", 1);
+	setInt("NewBattle_STR_HC_HE_AMMO", 1);
+	setInt("NewBattle_STR_HC_I_AMMO", 1);
+	setInt("NewBattle_STR_HEAVY_CANNON", 1);
+	setInt("NewBattle_STR_HEAVY_LASER", 1);
+	setInt("NewBattle_STR_HEAVY_PLASMA", 1);
+	setInt("NewBattle_STR_HEAVY_PLASMA_CLIP", 1);
+	setInt("NewBattle_STR_HIGH_EXPLOSIVE", 1);
+	setInt("NewBattle_STR_INCENDIARY_ROCKET", 1);
+	setInt("NewBattle_STR_LARGE_ROCKET", 1);
+	setInt("NewBattle_STR_LASER_PISTOL", 1);
+	setInt("NewBattle_STR_LASER_RIFLE", 1);
+	setInt("NewBattle_STR_MEDI_KIT", 1);
+	setInt("NewBattle_STR_MIND_PROBE", 1);
+	setInt("NewBattle_STR_MOTION_SCANNER", 1);
+	setInt("NewBattle_STR_PISTOL", 1);
+	setInt("NewBattle_STR_PISTOL_CLIP", 1);
+	setInt("NewBattle_STR_PLASMA_PISTOL", 1);
+	setInt("NewBattle_STR_PLASMA_PISTOL_CLIP", 1);
+	setInt("NewBattle_STR_PLASMA_RIFLE", 1);
+	setInt("NewBattle_STR_PLASMA_RIFLE_CLIP", 1);
+	setInt("NewBattle_STR_PROXIMITY_GRENADE", 1);
+	setInt("NewBattle_STR_PSI_AMP", 1);
+	setInt("NewBattle_STR_RIFLE", 1);
+	setInt("NewBattle_STR_RIFLE_CLIP", 1);
+	setInt("NewBattle_STR_ROCKET_LAUNCHER", 1);
+	setInt("NewBattle_STR_SMALL_LAUNCHER", 1);
+	setInt("NewBattle_STR_SMALL_ROCKET", 1);
+	setInt("NewBattle_STR_SMOKE_GRENADE", 1);
+	setInt("NewBattle_STR_STUN_BOMB", 1);
+	setInt("NewBattle_STR_STUN_ROD", 1);
+
 	// controls
 	setInt("keyOk", SDLK_RETURN);
 	setInt("keyCancel", SDLK_ESCAPE);
@@ -210,7 +274,7 @@ void loadArgs(int argc, char** args)
 			std::transform(argname.begin(), argname.end(), argname.begin(), ::tolower);
 			if (argc > i + 1)
 			{
-				HashMap<std::string, std::string>::iterator it = _options.find(argname);
+				unordered_map<std::string, std::string>::iterator it = _options.find(argname);
 				if (it != _options.end())
 				{
 					it->second = args[i+1];
@@ -390,12 +454,11 @@ void load(const std::string &filename)
 		options = &doc;
 	}
 
-	for (YAML::Iterator i = options->begin(); i != options->end(); ++i)
+	options >> _options;
+
+	if (const YAML::Node *pName = doc.FindValue("purchaseexclusions"))
 	{
-		std::string key, value;
-		i.first() >> key;
-		i.second() >> value;
-		_options[key] = value;
+		(*pName) >> _purchaseexclusions;
 	}
 
 	if (const YAML::Node *pName = doc.FindValue("rulesets"))
@@ -422,18 +485,7 @@ void save(const std::string &filename)
 	YAML::Emitter out;
 
 	out << YAML::BeginMap;
-	out << YAML::Key << "options" << YAML::Value; // << _options;
-	out << YAML::BeginMap;
-	std::set<std::string> sortedOptions;
-	for (HashMap<std::string, std::string>::iterator it = _options.begin(); it != _options.end(); ++it)
-	{
-		sortedOptions.insert(it->first);
-	}
-	for (std::set<std::string>::iterator it = sortedOptions.begin(); it != sortedOptions.end(); ++it)
-	{
-		out << YAML::Key << *it << YAML::Value << _options[*it];
-	}
-	out << YAML::EndMap;
+	out << YAML::Key << "options" << YAML::Value << _options;
 	out << YAML::Key << "rulesets" << YAML::Value << _rulesets;
 	out << YAML::EndMap;
 
@@ -506,7 +558,7 @@ std::string getString(const std::string& id)
  */
 int getInt(const std::string& id)
 {
-	HashMap<std::string, u_option>::iterator it = _optionsCache.find(id);
+	unordered_map<std::string, u_option>::iterator it = _optionsCache.find(id);
 	if (it != _optionsCache.end()) return it->second.i;
 
 	std::stringstream ss;
@@ -524,7 +576,7 @@ int getInt(const std::string& id)
  */
 bool getBool(const std::string& id)
 {
-	HashMap<std::string, u_option>::iterator it = _optionsCache.find(id);
+	unordered_map<std::string, u_option>::iterator it = _optionsCache.find(id);
 	if (it != _optionsCache.end()) return it->second.b;
 
 	std::stringstream ss;
@@ -580,5 +632,41 @@ std::vector<std::string> getRulesets()
 	return _rulesets;
 }
 
+std::vector<std::string> getPurchaseExclusions()
+{
+	return _purchaseexclusions;
 }
+
+}
+
+
+YAML::Emitter &operator <<(YAML::Emitter &out, unordered_map<std::string, std::string> &map)
+{
+	out << YAML::BeginMap;
+	std::set<std::string> sortedOptions;
+	for (unordered_map<std::string, std::string>::iterator it = map.begin(), end = map.end(); it != end; ++it)
+	{
+		sortedOptions.insert(it->first);
+	}
+	for (std::set<std::string>::iterator it = sortedOptions.begin(), end = sortedOptions.end(); it != sortedOptions.end(); ++it)
+	{
+		out << YAML::Key << *it << YAML::Value << map[*it];
+	}
+	out << YAML::EndMap;
+	
+	return out;
+}
+
+void operator >>(const YAML::Node *node, unordered_map<std::string, std::string> &map)
+{
+	for (YAML::Iterator i = node->begin(), end = node->end(); i != end; ++i)
+	{
+		std::string key, value;
+		i.first() >> key;
+		i.second() >> value;
+		map[key] = value;
+	}
+}
+
+
 }
